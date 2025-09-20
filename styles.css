@@ -332,7 +332,6 @@ body {
 .stat-card:nth-child(2) { transition-delay: 0.2s; }
 .stat-card:nth-child(3) { transition-delay: 0.3s; }
 .stat-card:nth-child(4) { transition-delay: 0.4s; }
-}
 
 /* Section Headers */
 .section-header {
