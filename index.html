@@ -6,7 +6,7 @@
     <title>Farmer Genius - Smart Solutions for Farmers</title>
     
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Open+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -15,43 +15,356 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <!-- Navigation Bar -->
-    <nav class="navbar" id="navbar">
-        <div class="nav-container">
+    <!-- Right Side Navigation -->
+    <div class="nav-overlay" id="nav-overlay"></div>
+    <nav class="right-nav" id="right-nav">
+        <div class="nav-header">
             <div class="nav-logo">
-                <img src="logo.png" alt="Farmer Genius Logo" class="logo-image">
+                <img src="logo.png" alt="Farmer Genius Logo" class="nav-logo-img">
                 <span>Farmer Genius</span>
             </div>
-            <ul class="nav-menu">
-                <li class="nav-item"><a href="#home" class="nav-link">Home</a></li>
-                <li class="nav-item"><a href="tools.html" class="nav-link">Farming Tools</a></li>
-                <li class="nav-item"><a href="schemes.html" class="nav-link">Government Schemes</a></li>
-                <li class="nav-item"><a href="modern-farming.html" class="nav-link">Modern Farming</a></li>
-                <li class="nav-item"><a href="#" class="nav-link" onclick="toggleChatWidget()">AI Assistant</a></li>
-            </ul>
-            <div class="hamburger">
-                <span class="bar"></span>
-                <span class="bar"></span>
-                <span class="bar"></span>
+            <button class="nav-close" id="nav-close">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <ul class="nav-links">
+            <li><a href="#home" class="nav-link active"><i class="fas fa-home"></i><span>Home</span></a></li>
+            <li><a href="#tools" class="nav-link"><i class="fas fa-tools"></i><span>Smart Tools</span></a></li>
+            <li><a href="#modern-farming" class="nav-link"><i class="fas fa-seedling"></i><span>Modern Farming</span></a></li>
+            <li><a href="#schemes" class="nav-link"><i class="fas fa-government"></i><span>Government Schemes</span></a></li>
+            <li><a href="#about" class="nav-link"><i class="fas fa-info-circle"></i><span>About Us</span></a></li>
+            <li><a href="#contact" class="nav-link"><i class="fas fa-envelope"></i><span>Contact</span></a></li>
+        </ul>
+        <div class="nav-footer">
+            <div class="nav-social">
+                <a href="#" class="social-icon"><i class="fab fa-whatsapp"></i></a>
+                <a href="#" class="social-icon"><i class="fab fa-youtube"></i></a>
+                <a href="#" class="social-icon"><i class="fab fa-facebook"></i></a>
             </div>
         </div>
     </nav>
 
+    <!-- Navigation Toggle Button -->
+    <button class="nav-toggle" id="nav-toggle">
+        <i class="fas fa-bars"></i>
+    </button>
+
     <!-- Hero Section -->
-    <section id="home" class="hero">
-        <div class="hero-particles"></div>
-        <div class="hero-content">
-            <h1 class="hero-title animate-fade-in-up">Farmer Genius – Smart Solutions for Farmers</h1>
-            <p class="hero-subtitle animate-fade-in-up delay-1">Farming made easier with tools, schemes, and guides.</p>
-            <a href="tools.html" class="hero-btn">
-                <i class="fas fa-seedling"></i>
-                Explore Farming Tools
-            </a>
+    <section id="home" class="hero-section">
+        <div class="hero-container">
+            <div class="hero-content">
+                <div class="hero-badge">
+                    <i class="fas fa-leaf"></i>
+                    <span>Smart Farming Solutions</span>
+                </div>
+                <h1 class="hero-title">Empowering Farmers with <span class="highlight">Smart Technology</span></h1>
+                <p class="hero-description">
+                    Get instant access to farming calculators, crop guidance, government schemes, and modern techniques. 
+                    Make informed decisions and boost your agricultural productivity with our intelligent tools.
+                </p>
+                <div class="hero-buttons">
+                    <a href="#tools" class="btn-primary">
+                        <i class="fas fa-calculator"></i>
+                        Explore Tools
+                    </a>
+                    <a href="#about" class="btn-secondary">
+                        <i class="fas fa-play"></i>
+                        Learn More
+                    </a>
+                </div>
+                <div class="hero-stats">
+                    <div class="stat-item">
+                        <span class="stat-number">50K+</span>
+                        <span class="stat-label">Farmers Helped</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">100K+</span>
+                        <span class="stat-label">Acres Optimized</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">25%</span>
+                        <span class="stat-label">Yield Increase</span>
+                    </div>
+                </div>
+            </div>
+            <div class="hero-image">
+                <div class="hero-card">
+                    <i class="fas fa-seedling"></i>
+                    <h3>Smart Farming</h3>
+                    <p>AI-powered solutions for modern agriculture</p>
+                </div>
+            </div>
         </div>
-        <div class="hero-overlay"></div>
-        <div class="scroll-indicator">
-            <div class="scroll-arrow">
-                <i class="fas fa-chevron-down"></i>
+    </section>
+
+    <!-- Tools Section -->
+    <section id="tools" class="tools-section">
+        <div class="container">
+            <div class="section-header">
+                <div class="section-badge">
+                    <i class="fas fa-tools"></i>
+                    <span>Smart Tools</span>
+                </div>
+                <h2 class="section-title">Farming Made Simple</h2>
+                <p class="section-description">
+                    Access powerful calculators and tools designed specifically for Indian farmers. 
+                    Get instant results and expert recommendations.
+                </p>
+            </div>
+            
+            <div class="tools-grid">
+                <!-- Fertilizer Calculator -->
+                <div class="tool-card" data-tool="fertilizer">
+                    <div class="tool-icon">
+                        <i class="fas fa-flask"></i>
+                    </div>
+                    <div class="tool-content">
+                        <h3>Fertilizer Calculator</h3>
+                        <p>Calculate exact NPK requirements for 50+ crops with organic recommendations</p>
+                        <div class="tool-features">
+                            <span class="feature-tag">50+ Crops</span>
+                            <span class="feature-tag">Organic Options</span>
+                        </div>
+                    </div>
+                    <div class="tool-action">
+                        <a href="tools.html#fertilizer" class="tool-btn">
+                            <span>Calculate Now</span>
+                            <i class="fas fa-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Irrigation Planner -->
+                <div class="tool-card" data-tool="irrigation">
+                    <div class="tool-icon">
+                        <i class="fas fa-tint"></i>
+                    </div>
+                    <div class="tool-content">
+                        <h3>Irrigation Planner</h3>
+                        <p>Plan water requirements and irrigation schedules for optimal crop growth</p>
+                        <div class="tool-features">
+                            <span class="feature-tag">Water Saving</span>
+                            <span class="feature-tag">Schedule Planning</span>
+                        </div>
+                    </div>
+                    <div class="tool-action">
+                        <a href="tools.html#irrigation" class="tool-btn">
+                            <span>Plan Irrigation</span>
+                            <i class="fas fa-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Seed Quality Checker -->
+                <div class="tool-card" data-tool="seeds">
+                    <div class="tool-icon">
+                        <i class="fas fa-seedling"></i>
+                    </div>
+                    <div class="tool-content">
+                        <h3>Seed Quality Checker</h3>
+                        <p>Learn simple tests to check seed quality and improve germination rates</p>
+                        <div class="tool-features">
+                            <span class="feature-tag">Quality Tests</span>
+                            <span class="feature-tag">Better Germination</span>
+                        </div>
+                    </div>
+                    <div class="tool-action">
+                        <a href="tools.html#seeds" class="tool-btn">
+                            <span>Check Quality</span>
+                            <i class="fas fa-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Disease Identifier -->
+                <div class="tool-card" data-tool="disease">
+                    <div class="tool-icon">
+                        <i class="fas fa-bug"></i>
+                    </div>
+                    <div class="tool-content">
+                        <h3>Crop Disease Identifier</h3>
+                        <p>Identify crop diseases and get treatment recommendations instantly</p>
+                        <div class="tool-features">
+                            <span class="feature-tag">Disease ID</span>
+                            <span class="feature-tag">Treatment Guide</span>
+                        </div>
+                    </div>
+                    <div class="tool-action">
+                        <a href="tools.html#disease" class="tool-btn">
+                            <span>Identify Disease</span>
+                            <i class="fas fa-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Crop Calendar -->
+                <div class="tool-card" data-tool="calendar">
+                    <div class="tool-icon">
+                        <i class="fas fa-calendar-alt"></i>
+                    </div>
+                    <div class="tool-content">
+                        <h3>Crop Calendar</h3>
+                        <p>Know the best planting and harvesting times for different crops</p>
+                        <div class="tool-features">
+                            <span class="feature-tag">Seasonal Guide</span>
+                            <span class="feature-tag">Climate Info</span>
+                        </div>
+                    </div>
+                    <div class="tool-action">
+                        <a href="tools.html#calendar" class="tool-btn">
+                            <span>View Calendar</span>
+                            <i class="fas fa-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Soil Test Guide -->
+                <div class="tool-card" data-tool="soil">
+                    <div class="tool-icon">
+                        <i class="fas fa-vial"></i>
+                    </div>
+                    <div class="tool-content">
+                        <h3>Soil Test Guide</h3>
+                        <p>Step-by-step guide to test and improve your soil health</p>
+                        <div class="tool-features">
+                            <span class="feature-tag">Soil Health</span>
+                            <span class="feature-tag">Improvement Tips</span>
+                        </div>
+                    </div>
+                    <div class="tool-action">
+                        <a href="tools.html#soil" class="tool-btn">
+                            <span>Test Soil</span>
+                            <i class="fas fa-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Modern Farming Section -->
+    <section id="modern-farming" class="modern-farming-section">
+        <div class="container">
+            <div class="section-content">
+                <div class="content-left">
+                    <div class="section-badge">
+                        <i class="fas fa-rocket"></i>
+                        <span>Innovation</span>
+                    </div>
+                    <h2 class="section-title">Modern Farming Techniques</h2>
+                    <p class="section-description">
+                        Discover cutting-edge agricultural practices from around the world, 
+                        adapted specifically for Indian farming conditions and climate.
+                    </p>
+                    <div class="feature-list">
+                        <div class="feature-item">
+                            <i class="fas fa-satellite-dish"></i>
+                            <div>
+                                <h4>Precision Agriculture</h4>
+                                <p>GPS-guided farming with smart sensors</p>
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-leaf"></i>
+                            <div>
+                                <h4>Sustainable Practices</h4>
+                                <p>Eco-friendly farming methods</p>
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-mobile-alt"></i>
+                            <div>
+                                <h4>Digital Agriculture</h4>
+                                <p>AI and IoT solutions for farms</p>
+                            </div>
+                        </div>
+                    </div>
+                    <a href="modern-farming.html" class="btn-primary">
+                        <i class="fas fa-arrow-right"></i>
+                        Explore Techniques
+                    </a>
+                </div>
+                <div class="content-right">
+                    <div class="modern-cards">
+                        <div class="modern-card">
+                            <i class="fas fa-tractor"></i>
+                            <h4>Smart Equipment</h4>
+                            <p>Automated farming machinery</p>
+                        </div>
+                        <div class="modern-card">
+                            <i class="fas fa-cloud-sun"></i>
+                            <h4>Weather Tech</h4>
+                            <p>Climate-smart agriculture</p>
+                        </div>
+                        <div class="modern-card">
+                            <i class="fas fa-chart-line"></i>
+                            <h4>Data Analytics</h4>
+                            <p>Farm performance insights</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Government Schemes Section -->
+    <section id="schemes" class="schemes-section">
+        <div class="container">
+            <div class="section-header">
+                <div class="section-badge">
+                    <i class="fas fa-government"></i>
+                    <span>Government Support</span>
+                </div>
+                <h2 class="section-title">Available Schemes & Subsidies</h2>
+                <p class="section-description">
+                    Stay updated with the latest government schemes, subsidies, and financial support 
+                    available for farmers across India.
+                </p>
+            </div>
+            
+            <div class="schemes-grid">
+                <div class="scheme-card">
+                    <div class="scheme-icon">
+                        <i class="fas fa-rupee-sign"></i>
+                    </div>
+                    <h3>PM-KISAN</h3>
+                    <p>₹6,000 annual direct income support</p>
+                    <div class="scheme-amount">₹6,000/year</div>
+                </div>
+                
+                <div class="scheme-card">
+                    <div class="scheme-icon">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <h3>Crop Insurance</h3>
+                    <p>Comprehensive crop protection scheme</p>
+                    <div class="scheme-amount">Full Coverage</div>
+                </div>
+                
+                <div class="scheme-card">
+                    <div class="scheme-icon">
+                        <i class="fas fa-credit-card"></i>
+                    </div>
+                    <h3>Kisan Credit Card</h3>
+                    <p>Low-interest agricultural loans</p>
+                    <div class="scheme-amount">4% Interest</div>
+                </div>
+                
+                <div class="scheme-card">
+                    <div class="scheme-icon">
+                        <i class="fas fa-solar-panel"></i>
+                    </div>
+                    <h3>PM-KUSUM</h3>
+                    <p>Solar pump and power subsidies</p>
+                    <div class="scheme-amount">60% Subsidy</div>
+                </div>
+            </div>
+            
+            <div class="schemes-cta">
+                <a href="schemes.html" class="btn-primary">
+                    <i class="fas fa-list"></i>
+                    View All Schemes
+                </a>
             </div>
         </div>
     </section>
@@ -59,196 +372,200 @@
     <!-- About Section -->
     <section id="about" class="about-section">
         <div class="container">
-            <div class="section-header">
-                <h2 class="section-title">About Farmer Genius</h2>
-                <p class="section-description">Empowering farmers with smart technology and knowledge</p>
-            </div>
-            
             <div class="about-content">
-                <div class="about-grid">
-                    <div class="about-card animate-on-scroll">
-                        <div class="about-icon">
-                            <i class="fas fa-calculator"></i>
-                        </div>
-                        <h3>Smart Calculators</h3>
-                        <p>Fertilizer and irrigation calculators to optimize your farming resources and maximize crop yields.</p>
+                <div class="about-left">
+                    <div class="section-badge">
+                        <i class="fas fa-heart"></i>
+                        <span>Our Mission</span>
                     </div>
-
-                    <div class="about-card animate-on-scroll">
-                        <div class="about-icon">
-                            <i class="fas fa-calendar-alt"></i>
+                    <h2 class="section-title">Empowering Farmers with Technology</h2>
+                    <p class="about-text">
+                        Farmer Genius is dedicated to bridging the gap between traditional farming wisdom 
+                        and modern technology. We provide easy-to-use tools, expert guidance, and up-to-date 
+                        information to help farmers make informed decisions and improve their livelihoods.
+                    </p>
+                    <div class="about-features">
+                        <div class="about-feature">
+                            <i class="fas fa-check-circle"></i>
+                            <span>Free farming tools and calculators</span>
                         </div>
-                        <h3>Crop Calendar</h3>
-                        <p>Detailed planting and harvesting schedules for different crops to help you plan your farming year.</p>
-                    </div>
-
-                    <div class="about-card animate-on-scroll">
-                        <div class="about-icon">
-                            <i class="fas fa-government"></i>
+                        <div class="about-feature">
+                            <i class="fas fa-check-circle"></i>
+                            <span>Expert agricultural guidance</span>
                         </div>
-                        <h3>Government Schemes</h3>
-                        <p>Stay updated with the latest government schemes and subsidies available for farmers.</p>
-                    </div>
-
-                    <div class="about-card animate-on-scroll">
-                        <div class="about-icon">
-                            <i class="fas fa-robot"></i>
+                        <div class="about-feature">
+                            <i class="fas fa-check-circle"></i>
+                            <span>Government scheme updates</span>
                         </div>
-                        <h3>AI Assistant</h3>
-                        <p>Get instant answers to your farming questions with our intelligent AI assistant available 24/7.</p>
+                        <div class="about-feature">
+                            <i class="fas fa-check-circle"></i>
+                            <span>24/7 AI assistant support</span>
+                        </div>
                     </div>
                 </div>
-                
-                <div class="about-text animate-on-scroll">
-                    <p>Farmer Genius is your comprehensive digital companion for modern farming. We combine traditional agricultural wisdom with cutting-edge technology to help farmers make informed decisions, increase productivity, and improve their livelihoods.</p>
+                <div class="about-right">
+                    <div class="about-stats">
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div class="stat-info">
+                                <span class="stat-number">50,000+</span>
+                                <span class="stat-label">Farmers Helped</span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-seedling"></i>
+                            </div>
+                            <div class="stat-info">
+                                <span class="stat-number">100,000+</span>
+                                <span class="stat-label">Acres Optimized</span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <div class="stat-info">
+                                <span class="stat-number">25%</span>
+                                <span class="stat-label">Average Yield Increase</span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-rupee-sign"></i>
+                            </div>
+                            <div class="stat-info">
+                                <span class="stat-number">₹500 Cr</span>
+                                <span class="stat-label">Farmer Savings</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Statistics Section -->
-    <section class="stats-section">
-        <div class="container">
-            <div class="stats-grid">
-                <div class="stat-card animate-on-scroll">
-                    <div class="stat-icon">
-                        <i class="fas fa-users"></i>
-                    </div>
-                    <div class="stat-number" data-target="50000">0</div>
-                    <div class="stat-label">Farmers Helped</div>
-                </div>
-                
-                <div class="stat-card animate-on-scroll">
-                    <div class="stat-icon">
-                        <i class="fas fa-seedling"></i>
-                    </div>
-                    <div class="stat-number" data-target="100000">0</div>
-                    <div class="stat-label">Acres Optimized</div>
-                </div>
-                
-                <div class="stat-card animate-on-scroll">
-                    <div class="stat-icon">
-                        <i class="fas fa-chart-line"></i>
-                    </div>
-                    <div class="stat-number" data-target="25">0</div>
-                    <div class="stat-label">% Yield Increase</div>
-                </div>
-                
-                <div class="stat-card animate-on-scroll">
-                    <div class="stat-icon">
-                        <i class="fas fa-rupee-sign"></i>
-                    </div>
-                    <div class="stat-number" data-target="500">0</div>
-                    <div class="stat-label">Crores Saved</div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Features Section -->
-    <section class="features-section">
+    <!-- Contact Section -->
+    <section id="contact" class="contact-section">
         <div class="container">
             <div class="section-header">
-                <h2 class="section-title animate-on-scroll">Why Choose Farmer Genius?</h2>
-                <p class="section-description animate-on-scroll">Discover the advantages that make us the preferred choice for modern farmers</p>
+                <div class="section-badge">
+                    <i class="fas fa-envelope"></i>
+                    <span>Get in Touch</span>
+                </div>
+                <h2 class="section-title">Contact Us</h2>
+                <p class="section-description">
+                    Have questions or need support? We're here to help you succeed in your farming journey.
+                </p>
             </div>
             
-            <div class="features-grid">
-                <div class="feature-item animate-on-scroll">
-                    <div class="feature-icon">
-                        <i class="fas fa-mobile-alt"></i>
+            <div class="contact-content">
+                <div class="contact-info">
+                    <div class="contact-item">
+                        <div class="contact-icon">
+                            <i class="fas fa-phone"></i>
+                        </div>
+                        <div class="contact-details">
+                            <h4>Phone Support</h4>
+                            <p>+91 98765 43210</p>
+                            <span>Mon-Sat, 9 AM - 6 PM</span>
+                        </div>
                     </div>
-                    <h3>Easy to Use</h3>
-                    <p>Simple, intuitive interface designed for farmers of all technical backgrounds</p>
+                    
+                    <div class="contact-item">
+                        <div class="contact-icon">
+                            <i class="fas fa-envelope"></i>
+                        </div>
+                        <div class="contact-details">
+                            <h4>Email Support</h4>
+                            <p>contact@farmergenius.com</p>
+                            <span>24/7 Email Support</span>
+                        </div>
+                    </div>
+                    
+                    <div class="contact-item">
+                        <div class="contact-icon">
+                            <i class="fab fa-whatsapp"></i>
+                        </div>
+                        <div class="contact-details">
+                            <h4>WhatsApp</h4>
+                            <p>+91 98765 43210</p>
+                            <span>Quick Support</span>
+                        </div>
+                    </div>
                 </div>
                 
-                <div class="feature-item animate-on-scroll">
-                    <div class="feature-icon">
-                        <i class="fas fa-language"></i>
+                <div class="contact-social">
+                    <h4>Follow Us</h4>
+                    <div class="social-links">
+                        <a href="#" class="social-link whatsapp">
+                            <i class="fab fa-whatsapp"></i>
+                            <span>WhatsApp</span>
+                        </a>
+                        <a href="#" class="social-link youtube">
+                            <i class="fab fa-youtube"></i>
+                            <span>YouTube</span>
+                        </a>
+                        <a href="#" class="social-link facebook">
+                            <i class="fab fa-facebook"></i>
+                            <span>Facebook</span>
+                        </a>
                     </div>
-                    <h3>Multi-Language</h3>
-                    <p>Available in multiple regional languages for better accessibility</p>
-                </div>
-                
-                <div class="feature-item animate-on-scroll">
-                    <div class="feature-icon">
-                        <i class="fas fa-clock"></i>
-                    </div>
-                    <h3>24/7 Support</h3>
-                    <p>Round-the-clock AI assistance and expert guidance whenever you need it</p>
-                </div>
-                
-                <div class="feature-item animate-on-scroll">
-                    <div class="feature-icon">
-                        <i class="fas fa-shield-alt"></i>
-                    </div>
-                    <h3>Trusted & Secure</h3>
-                    <p>Reliable information backed by agricultural experts and research institutions</p>
-                </div>
-                
-                <div class="feature-item animate-on-scroll">
-                    <div class="feature-icon">
-                        <i class="fas fa-sync-alt"></i>
-                    </div>
-                    <h3>Regular Updates</h3>
-                    <p>Constantly updated with latest farming techniques and government schemes</p>
-                </div>
-                
-                <div class="feature-item animate-on-scroll">
-                    <div class="feature-icon">
-                        <i class="fas fa-money-bill-wave"></i>
-                    </div>
-                    <h3>Cost Effective</h3>
-                    <p>Free tools and resources to help you save money and increase profits</p>
                 </div>
             </div>
         </div>
     </section>
 
     <!-- Footer -->
-    <footer id="contact" class="footer">
+    <footer class="footer">
         <div class="container">
             <div class="footer-content">
-                <div class="footer-section">
+                <div class="footer-brand">
                     <div class="footer-logo">
-                        <img src="logo.png" alt="Farmer Genius Logo" class="logo-image">
+                        <img src="logo.png" alt="Farmer Genius Logo" class="footer-logo-img">
                         <span>Farmer Genius</span>
                     </div>
-                    <p>Smart solutions for modern farming. Empowering farmers with technology and knowledge.</p>
+                    <p>Empowering farmers with smart technology and expert guidance for sustainable agriculture.</p>
                 </div>
                 
-                <div class="footer-section">
-                    <h3>Contact Info</h3>
-                    <div class="contact-info">
-                        <div class="contact-item">
-                            <i class="fas fa-envelope"></i>
-                            <span>contact@farmergenius.com</span>
-                        </div>
-                        <div class="contact-item">
-                            <i class="fas fa-phone"></i>
-                            <span>+91 98765 43210</span>
-                        </div>
+                <div class="footer-links">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="#home">Home</a></li>
+                        <li><a href="#tools">Smart Tools</a></li>
+                        <li><a href="modern-farming.html">Modern Farming</a></li>
+                        <li><a href="schemes.html">Government Schemes</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-contact">
+                    <h4>Contact Info</h4>
+                    <div class="footer-contact-item">
+                        <i class="fas fa-envelope"></i>
+                        <span>contact@farmergenius.com</span>
                     </div>
-                </div>
-                
-                <div class="footer-section">
-                    <h3>Follow Us</h3>
-                    <div class="social-links">
-                        <a href="#" class="social-link whatsapp">
-                            <i class="fab fa-whatsapp"></i>
-                        </a>
-                        <a href="#" class="social-link youtube">
-                            <i class="fab fa-youtube"></i>
-                        </a>
-                        <a href="#" class="social-link facebook">
-                            <i class="fab fa-facebook"></i>
-                        </a>
+                    <div class="footer-contact-item">
+                        <i class="fas fa-phone"></i>
+                        <span>+91 98765 43210</span>
                     </div>
                 </div>
             </div>
             
             <div class="footer-bottom">
                 <p>&copy; 2025 Farmer Genius. All rights reserved.</p>
+                <div class="footer-social">
+                    <a href="#" class="footer-social-link">
+                        <i class="fab fa-whatsapp"></i>
+                    </a>
+                    <a href="#" class="footer-social-link">
+                        <i class="fab fa-youtube"></i>
+                    </a>
+                    <a href="#" class="footer-social-link">
+                        <i class="fab fa-facebook"></i>
+                    </a>
+                </div>
             </div>
         </div>
     </footer>

@@ -1,33 +1,81 @@
 // Mobile Navigation Toggle
-const hamburger = document.querySelector('.hamburger');
-const navMenu = document.querySelector('.nav-menu');
+const navToggle = document.getElementById('nav-toggle');
+const rightNav = document.getElementById('right-nav');
+const navOverlay = document.getElementById('nav-overlay');
+const navClose = document.getElementById('nav-close');
 
-if (hamburger && navMenu) {
-    hamburger.addEventListener('click', () => {
-        hamburger.classList.toggle('active');
-        navMenu.classList.toggle('active');
+// Right side navigation functionality
+if (navToggle && rightNav && navOverlay && navClose) {
+    navToggle.addEventListener('click', () => {
+        rightNav.classList.add('active');
+        navOverlay.classList.add('active');
+        document.body.style.overflow = 'hidden';
     });
 
-    // Close mobile menu when clicking on a link
-    document.querySelectorAll('.nav-link').forEach(n => n.addEventListener('click', () => {
-        hamburger.classList.remove('active');
-        navMenu.classList.remove('active');
-    }));
+    navClose.addEventListener('click', closeNav);
+    navOverlay.addEventListener('click', closeNav);
+
+    function closeNav() {
+        rightNav.classList.remove('active');
+        navOverlay.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+
+    // Close nav when clicking on a link
+    document.querySelectorAll('.nav-link').forEach(link => {
+        link.addEventListener('click', () => {
+            closeNav();
+            
+            // Update active link
+            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+            link.classList.add('active');
+        });
+    });
+
+    // Handle escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && rightNav.classList.contains('active')) {
+            closeNav();
+        }
+    });
 }
 
-// Navbar scroll effect
-window.addEventListener('scroll', () => {
-    const navbar = document.getElementById('navbar');
-    if (navbar) {
-        if (window.scrollY > 50) {
-            navbar.classList.add('scrolled');
-        } else {
-            navbar.classList.remove('scrolled');
+// Smooth scrolling for navigation links
+document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+            target.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+            });
         }
-    }
+    });
 });
 
-// Scroll Animation Observer
+// Update active navigation link on scroll
+window.addEventListener('scroll', () => {
+    const sections = document.querySelectorAll('section[id]');
+    const scrollPos = window.scrollY + 100;
+
+    sections.forEach(section => {
+        const sectionTop = section.offsetTop;
+        const sectionHeight = section.offsetHeight;
+        const sectionId = section.getAttribute('id');
+        
+        if (scrollPos >= sectionTop && scrollPos < sectionTop + sectionHeight) {
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === `#${sectionId}`) {
+                    link.classList.add('active');
+                }
+            });
+        }
+    });
+});
+
+// Intersection Observer for animations
 const observerOptions = {
     threshold: 0.1,
     rootMargin: '0px 0px -50px 0px'
@@ -36,31 +84,28 @@ const observerOptions = {
 const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
         if (entry.isIntersecting) {
-            entry.target.classList.add('animate');
-            
-            // Trigger counter animation for stat numbers
-            if (entry.target.classList.contains('stat-card')) {
-                const numberElement = entry.target.querySelector('.stat-number');
-                if (numberElement && !numberElement.classList.contains('counted')) {
-                    animateCounter(numberElement);
-                    numberElement.classList.add('counted');
-                }
-            }
+            entry.target.style.opacity = '1';
+            entry.target.style.transform = 'translateY(0)';
         }
     });
 }, observerOptions);
 
-// Observe all elements with animate-on-scroll class
+// Observe elements for animation
 document.addEventListener('DOMContentLoaded', () => {
-    const animateElements = document.querySelectorAll('.animate-on-scroll');
-    animateElements.forEach(el => observer.observe(el));
+    const animateElements = document.querySelectorAll('.tool-card, .scheme-card, .modern-card, .stat-card, .contact-item');
+    animateElements.forEach(el => {
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(30px)';
+        el.style.transition = 'all 0.6s ease';
+        observer.observe(el);
+    });
 });
 
-// Counter Animation
+// Counter animation for statistics
 function animateCounter(element) {
-    const target = parseInt(element.getAttribute('data-target'));
-    const duration = 2000; // 2 seconds
-    const step = target / (duration / 16); // 60fps
+    const target = parseInt(element.textContent.replace(/[^\d]/g, ''));
+    const duration = 2000;
+    const step = target / (duration / 16);
     let current = 0;
     
     const timer = setInterval(() => {
@@ -70,22 +115,45 @@ function animateCounter(element) {
             clearInterval(timer);
         }
         
-        // Format number with commas for large numbers
-        const formattedNumber = Math.floor(current).toLocaleString();
+        let formattedNumber = Math.floor(current);
+        if (element.textContent.includes('K')) {
+            formattedNumber = (formattedNumber / 1000).toFixed(0) + 'K';
+        } else if (element.textContent.includes('Cr')) {
+            formattedNumber = '₹' + (formattedNumber / 100).toFixed(0) + ' Cr';
+        } else if (element.textContent.includes('%')) {
+            formattedNumber = formattedNumber + '%';
+        } else {
+            formattedNumber = formattedNumber.toLocaleString();
+        }
+        
         element.textContent = formattedNumber;
     }, 16);
 }
 
-// Smooth scroll for scroll indicator
+// Animate counters when they come into view
+const counterObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting && !entry.target.classList.contains('counted')) {
+            animateCounter(entry.target);
+            entry.target.classList.add('counted');
+        }
+    });
+}, { threshold: 0.5 });
+
 document.addEventListener('DOMContentLoaded', () => {
-    const scrollIndicator = document.querySelector('.scroll-indicator');
-    if (scrollIndicator) {
-        scrollIndicator.addEventListener('click', () => {
-            const aboutSection = document.querySelector('.about-section');
-            if (aboutSection) {
-                aboutSection.scrollIntoView({ behavior: 'smooth' });
-            }
-        });
+    const counters = document.querySelectorAll('.stat-number');
+    counters.forEach(counter => {
+        counterObserver.observe(counter);
+    });
+});
+
+// Parallax effect for hero section
+window.addEventListener('scroll', () => {
+    const scrolled = window.pageYOffset;
+    const heroSection = document.querySelector('.hero-section');
+    if (heroSection) {
+        const rate = scrolled * -0.5;
+        heroSection.style.transform = `translateY(${rate}px)`;
     }
 });
 
@@ -102,6 +170,49 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 10000);
     }
 });
+
+// Tool card hover effects
+document.addEventListener('DOMContentLoaded', () => {
+    const toolCards = document.querySelectorAll('.tool-card');
+    toolCards.forEach(card => {
+        card.addEventListener('mouseenter', () => {
+            card.style.transform = 'translateY(-8px) scale(1.02)';
+        });
+        
+        card.addEventListener('mouseleave', () => {
+            card.style.transform = 'translateY(0) scale(1)';
+        });
+    });
+});
+
+// Navbar scroll effect (keeping for compatibility)
+window.addEventListener('scroll', () => {
+    const navbar = document.getElementById('navbar');
+    if (navbar) {
+        if (window.scrollY > 50) {
+            navbar.classList.add('scrolled');
+        } else {
+            navbar.classList.remove('scrolled');
+        }
+    }
+});
+
+// Legacy hamburger functionality (keeping for other pages)
+const hamburger = document.querySelector('.hamburger');
+const navMenu = document.querySelector('.nav-menu');
+
+if (hamburger && navMenu) {
+    hamburger.addEventListener('click', () => {
+        hamburger.classList.toggle('active');
+        navMenu.classList.toggle('active');
+    });
+
+    // Close mobile menu when clicking on a link
+    document.querySelectorAll('.nav-link').forEach(n => n.addEventListener('click', () => {
+        hamburger.classList.remove('active');
+        navMenu.classList.remove('active');
+    }));
+}
 
 // ============== CALCULATOR FUNCTIONS ==============
 
