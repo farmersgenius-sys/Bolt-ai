@@ -75,6 +75,25 @@ body {
 .nav-menu {
     display: flex;
     list-style: none;
+    padding: 0;
+}
+
+.footer-links li {
+    margin-bottom: 0.5rem;
+}
+
+.footer-links a {
+    color: var(--white);
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.footer-links a:hover {
+    color: var(--accent-yellow);
+}
+
+.footer-links {
+    list-style: none;
     margin: 0;
 }
 
