@@ -1,971 +1,692 @@
-// DOM Content Loaded
-document.addEventListener('DOMContentLoaded', function() {
-    // Auto-hide navigation functionality
-    let navTimeout;
+// ==================== GLOBAL VARIABLES ====================
+let currentLanguage = 'en';
+let currentTheme = 'light';
+let chatOpen = false;
+
+// OpenAI API Configuration
+const OPENAI_API_KEY = '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';
+const OPENAI_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
+
+// ==================== NAVIGATION FUNCTIONS ====================
+function toggleNavigation() {
     const navbar = document.getElementById('navbar');
     const navToggle = document.getElementById('navToggle');
     
-    // Only set up navigation if elements exist
-    if (navbar && navToggle) {
-        // Auto-hide navigation after 3 seconds of inactivity
-        function startNavTimeout() {
-            clearTimeout(navTimeout);
-            navTimeout = setTimeout(() => {
-                if (navbar.classList.contains('active')) {
-                    hideNavigation();
-                }
-            }, 3000);
-        }
-        
-        // Show navigation when hovering over toggle area
-        navToggle.addEventListener('mouseenter', function() {
-            if (!navbar.classList.contains('active')) {
-                showNavigation();
-            }
-        });
-        
-        // Keep navigation open when hovering over it
-        navbar.addEventListener('mouseenter', function() {
-            clearTimeout(navTimeout);
-        });
-        
-        // Start timeout when leaving navigation
-        navbar.addEventListener('mouseleave', function() {
-            startNavTimeout();
-        });
+    navbar.classList.toggle('active');
+    navToggle.classList.toggle('active');
+    
+    // Close navigation when clicking outside
+    if (navbar.classList.contains('active')) {
+        document.addEventListener('click', closeNavOnClickOutside);
+    } else {
+        document.removeEventListener('click', closeNavOnClickOutside);
     }
-    
-    // Close mobile menu when clicking on a link
-    document.querySelectorAll('.nav-link').forEach(n => n.addEventListener('click', function() {
-        // Remove active class from all nav links
-        document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
-        // Add active class to clicked link
-        this.classList.add('active');
-        
-        // Hide navigation after clicking a link
-        setTimeout(hideNavigation, 500);
-    }));
-
-    // Smooth scrolling for navigation links
-    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-        anchor.addEventListener('click', function (e) {
-            const href = this.getAttribute('href');
-            // Skip if href is just "#" or empty
-            if (href === '#' || href === '#!') {
-                return;
-            }
-            e.preventDefault();
-            const target = document.querySelector(href);
-            if (target) {
-                const offsetTop = target.offsetTop - 80; // Account for fixed navbar
-                window.scrollTo({
-                    top: offsetTop,
-                    behavior: 'smooth'
-                });
-            }
-        });
-    });
-
-    // Enhanced scroll effects
-    window.addEventListener('scroll', function() {
-        const scrolled = window.scrollY;
-        const rate = scrolled * -0.5;
-        
-        // Parallax effect for hero section
-        const hero = document.querySelector('.hero');
-        if (hero) {
-            hero.style.transform = `translate3d(0, ${rate}px, 0)`;
-        }
-        
-        // Show/hide navigation toggle based on scroll (only if navToggle exists)
-        if (navToggle) {
-            if (scrolled > 100) {
-                navToggle.style.opacity = '0.8';
-            } else {
-                navToggle.style.opacity = '1';
-            }
-        }
-    });
-    
-    // Counter animation for statistics
-    const counters = document.querySelectorAll('.stat-number');
-    const counterObserverOptions = {
-        threshold: 0.7
-    };
-    
-    const counterObserver = new IntersectionObserver(function(entries) {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                const counter = entry.target;
-                const target = parseInt(counter.getAttribute('data-target'));
-                const count = +counter.innerText;
-                const increment = target / 100;
-                
-                if (count < target) {
-                    counter.innerText = Math.ceil(count + increment);
-                    setTimeout(() => {
-                        counterObserver.observe(counter);
-                    }, 20);
-                } else {
-                    counter.innerText = target;
-                    if (target === 99) {
-                        counter.innerText = target + '%';
-                    } else if (target === 10000) {
-                        counter.innerText = target + '+';
-                    }
-                }
-            }
-        });
-    }, counterObserverOptions);
-    
-    counters.forEach(counter => {
-        counterObserver.observe(counter);
-    });
-
-    // Animate elements on scroll
-    const observerOptions = {
-        threshold: 0.1,
-        rootMargin: '0px 0px -100px 0px'
-    };
-
-    const observer = new IntersectionObserver(function(entries) {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.style.animationPlayState = 'running';
-                entry.target.classList.add('loading');
-            }
-        });
-    }, observerOptions);
-
-    // Observe elements for animation
-    document.querySelectorAll('.tool-card, .scheme-card, .timeline-item, .feature-card, .about-card, .stat-item').forEach(el => {
-        observer.observe(el);
-    });
-    
-    // Add loading message
-    console.log('Farmer Genius website loaded successfully! 🌱');
-    console.log('All interactive features are ready to use.');
-    
-    // Performance logging
-    window.addEventListener('load', function() {
-        const loadTime = performance.now();
-        console.log(`Website loaded in ${loadTime.toFixed(2)}ms`);
-    });
-});
-
-// Seed Quality Checker Function
-function checkSeedQuality() {
-    const seed = document.getElementById('seed-select').value;
-    const resultDiv = document.getElementById('seed-quality-result');
-
-    if (!seed) {
-        showResult(resultDiv, 'Please select a seed type.', 'error');
-        return;
-    }
-
-    const seedQualityData = {
-        wheat: {
-            tests: [
-                {
-                    name: "Float Test",
-                    description: "Take a glass of water, put wheat seeds inside. Good seeds sink, bad seeds float."
-                },
-                {
-                    name: "Germination Test", 
-                    description: "Place 100 seeds in moist cloth. After 7 days, count germinated seeds. If more than 80 grow, quality is good."
-                },
-                {
-                    name: "Color & Size",
-                    description: "Healthy wheat seeds are uniform in size and golden-brown in color. Avoid shriveled or discolored seeds."
-                }
-            ]
-        },
-        rice: {
-            tests: [
-                {
-                    name: "Salt Water Test",
-                    description: "Mix 2 spoons of salt in water. Drop rice seeds. Good seeds sink to bottom."
-                },
-                {
-                    name: "Purity Check",
-                    description: "Remove broken or shriveled seeds; only full grains should be kept for planting."
-                },
-                {
-                    name: "Moisture Test",
-                    description: "Good rice seeds should have 12-14% moisture. Bite test - good seeds make cracking sound."
-                }
-            ]
-        },
-        corn: {
-            tests: [
-                {
-                    name: "Physical Inspection",
-                    description: "Select plump, well-filled kernels. Avoid cracked, moldy, or insect-damaged seeds."
-                },
-                {
-                    name: "Germination Test",
-                    description: "Place 100 seeds between wet paper towels. After 7 days, 85+ should germinate for good quality."
-                },
-                {
-                    name: "Vigor Test",
-                    description: "Good corn/maize seeds are bright yellow/orange, uniform in size, and have hard texture."
-                }
-            ]
-        },
-        cotton: {
-            tests: [
-                {
-                    name: "Acid Delinting Check",
-                    description: "Quality cotton seeds are properly delinted with smooth surface, no fuzzy material."
-                },
-                {
-                    name: "Size Uniformity",
-                    description: "Select seeds of uniform size. Discard very small or very large seeds."
-                },
-                {
-                    name: "Viability Test",
-                    description: "Cut test - good cotton seeds have white, firm cotyledons inside."
-                }
-            ]
-        },
-        mustard: {
-            tests: [
-                {
-                    name: "Color Test",
-                    description: "Good mustard seeds are dark brown to black, shiny, and uniform in color."
-                },
-                {
-                    name: "Oil Content Check",
-                    description: "Press seeds between fingers - good seeds release oil and have strong aroma."
-                },
-                {
-                    name: "Purity Test",
-                    description: "Remove broken seeds, stones, and other crop seeds. 98% purity is ideal."
-                }
-            ]
-        },
-        soybean: {
-            tests: [
-                {
-                    name: "Visual Inspection",
-                    description: "Good soybean seeds are cream to light yellow, plump, and free from cracks."
-                },
-                {
-                    name: "Split Test", 
-                    description: "Split seeds to check - good seeds have white to cream colored cotyledons."
-                },
-                {
-                    name: "Water Absorption",
-                    description: "Soak 100 seeds in water for 4 hours. Good seeds absorb water and swell uniformly."
-                }
-            ]
-        },
-        groundnut: {
-            tests: [
-                {
-                    name: "Shell Removal",
-                    description: "Remove shells carefully. Good groundnut seeds are pink to red with thin seed coat."
-                },
-                {
-                    name: "Float Test",
-                    description: "In water, good groundnut seeds sink. Floating seeds are likely damaged or immature."
-                },
-                {
-                    name: "Crush Test",
-                    description: "Good seeds are firm and don't crush easily. Avoid soft or spongy seeds."
-                }
-            ]
-        },
-        sugarcane: {
-            tests: [
-                {
-                    name: "Bud Viability",
-                    description: "Check 3-bud setts. Buds should be plump, fresh, and not dried or damaged."
-                },
-                {
-                    name: "Node Quality",
-                    description: "Select setts from middle portion of cane, 8-10 months old with healthy nodes."
-                },
-                {
-                    name: "Disease Check",
-                    description: "Avoid setts with red rot, smut, or other disease symptoms. Use disease-free mother plants."
-                }
-            ]
-        },
-        pulses: {
-            tests: [
-                {
-                    name: "Seed Coat Check",
-                    description: "Good pulse seeds have intact, smooth seed coat without cracks or holes."
-                },
-                {
-                    name: "Weevil Test",
-                    description: "Check for insect holes. Avoid seeds with small round holes indicating weevil damage."
-                },
-                {
-                    name: "Age Test",
-                    description: "Fresh pulse seeds are bright colored. Old seeds become dull and have poor germination."
-                }
-            ]
-        },
-        vegetables: {
-            tests: [
-                {
-                    name: "Size Grading",
-                    description: "Select uniform sized seeds. Very small or very large seeds often have poor germination."
-                },
-                {
-                    name: "Moisture Check",
-                    description: "Good vegetable seeds should be dry (8-12% moisture) and make rattling sound in packet."
-                },
-                {
-                    name: "Germination Test",
-                    description: "Test germination on wet paper. 80%+ germination indicates good quality seeds."
-                }
-            ]
-        }
-    };
-
-    const seedInfo = seedQualityData[seed];
-    const testsHTML = seedInfo.tests.map(test => `
-        <div style="margin-bottom: 15px; padding: 10px; background: #f0f8f0; border-left: 4px solid var(--primary-green); border-radius: 5px;">
-            <h5 style="color: var(--primary-green); margin-bottom: 5px;">${test.name}</h5>
-            <p style="margin: 0; font-size: 0.9rem;">${test.description}</p>
-        </div>
-    `).join('');
-
-    const resultHTML = `
-        <div style="text-align: left;">
-            <h4 style="color: var(--primary-green); margin-bottom: 15px;">Quality Tests for ${seed.charAt(0).toUpperCase() + seed.slice(1)} Seeds:</h4>
-            ${testsHTML}
-            <div style="margin-top: 15px; padding: 10px; background: #fff3cd; border-radius: 5px; font-size: 0.9rem;">
-                <strong>💡 Tip:</strong> Always buy certified seeds from authorized dealers for best results.
-            </div>
-            <div style="margin-top: 10px; padding: 8px; background: #f8f9fa; border-radius: 4px; font-size: 0.8rem; color: #666;">
-                <strong>⚠️ Disclaimer:</strong> Quality tests are general guidelines. Seed standards may vary by region. For certified quality assurance, consult local seed certification agencies.
-            </div>
-        </div>
-    `;
-
-    showResult(resultDiv, resultHTML, 'success');
 }
 
-// Crop Disease Identifier Function
-function searchDisease() {
-    const crop = document.getElementById('disease-crop-select').value;
-    const searchTerm = document.getElementById('disease-search').value.toLowerCase();
-    const resultDiv = document.getElementById('disease-result');
-
-    if (!searchTerm) {
-        showResult(resultDiv, 'Please enter disease name or symptoms to search.', 'error');
-        return;
-    }
-
-    const diseaseDatabase = [
-        // Rice Diseases
-        { crop: 'rice', disease: 'Blast', symptoms: 'Small brown spots on leaves, spreading quickly', identification: 'Spots enlarge into diamond-shaped lesions. Crop looks burned.', solution: 'Use resistant seed varieties; spray tricyclazole fungicide.' },
-        { crop: 'rice', disease: 'Brown Spot', symptoms: 'Small brown spots with yellow halo on leaves', identification: 'Spots are circular, brown center with yellow margin', solution: 'Improve field drainage, spray mancozeb fungicide.' },
-        { crop: 'rice', disease: 'Bacterial Blight', symptoms: 'Water-soaked lesions on leaf tips', identification: 'Lesions turn yellow then brown, spread along leaf margins', solution: 'Use copper-based bactericides, plant resistant varieties.' },
-        { crop: 'rice', disease: 'Sheath Blight', symptoms: 'Oval lesions on leaf sheath near water level', identification: 'Gray-green lesions with brown borders', solution: 'Reduce plant density, apply validamycin fungicide.' },
-        { crop: 'rice', disease: 'False Smut', symptoms: 'Orange powder masses replace individual rice grains', identification: 'Individual grains become large orange balls', solution: 'Use copper oxychloride, avoid over-fertilization.' },
-
-        // Wheat Diseases  
-        { crop: 'wheat', disease: 'Rust', symptoms: 'Yellow-orange powder on leaves', identification: 'Powder rubs off easily on hand, appears as pustules', solution: 'Remove infected leaves, use fungicide (propiconazole).' },
-        { crop: 'wheat', disease: 'Loose Smut', symptoms: 'Black powdery masses replace wheat grains', identification: 'Entire head becomes black powder at maturity', solution: 'Use systemic fungicide seed treatment.' },
-        { crop: 'wheat', disease: 'Karnal Bunt', symptoms: 'Fishy smell from grains, partial black powder in grains', identification: 'Only part of grain affected, strong fishy odor', solution: 'Use seed treatment with tebuconazole.' },
-        { crop: 'wheat', disease: 'Powdery Mildew', symptoms: 'White powdery coating on leaves', identification: 'White flour-like coating, mainly on upper leaf surface', solution: 'Spray sulfur-based fungicide, improve air circulation.' },
-        { crop: 'wheat', disease: 'Septoria Blight', symptoms: 'Small brown spots with dark centers on leaves', identification: 'Spots have dark pycnidia (small black dots) in center', solution: 'Use fungicides like chlorothalonil, practice crop rotation.' },
-
-        // Corn/Maize Diseases
-        { crop: 'corn', disease: 'Corn Borer', symptoms: 'Holes in stalks and ears, sawdust-like frass', identification: 'Small holes with larvae inside stalks', solution: 'Use Bt corn, apply chemical insecticides during early stages.' },
-        { crop: 'corn', disease: 'Leaf Blight', symptoms: 'Long grayish lesions on leaves', identification: 'Boat-shaped lesions, gray center with dark borders', solution: 'Plant resistant varieties, spray mancozeb fungicide.' },
-        { crop: 'corn', disease: 'Downy Mildew', symptoms: 'Yellow stripes on leaves, white growth on undersides', identification: 'Parallel yellow stripes, white fuzzy growth underneath', solution: 'Use metalaxyl seed treatment, improve drainage.' },
-        { crop: 'corn', disease: 'Common Smut', symptoms: 'Large grayish galls on ears, tassels, or stalks', identification: 'Tumor-like growths that burst open releasing black spores', solution: 'Remove and destroy affected plants, avoid high nitrogen.' },
-        { crop: 'corn', disease: 'Armyworm', symptoms: 'Holes in leaves, complete defoliation in severe cases', identification: 'Green caterpillars with stripes, feeding in groups', solution: 'Use pheromone traps, spray insecticides like chlorpyrifos.' },
-
-        // Cotton Diseases
-        { crop: 'cotton', disease: 'Bollworm', symptoms: 'Holes in cotton bolls, larvae inside', identification: 'Small green/brown larvae inside bolls, circular holes', solution: 'Use pheromone traps, spray bio-pesticide (Bt).' },
-        { crop: 'cotton', disease: 'Wilt', symptoms: 'Yellowing and wilting of plants, vascular browning', identification: 'Plants wilt despite adequate moisture, brown vascular tissue', solution: 'Plant wilt-resistant varieties, improve soil drainage.' },
-        { crop: 'cotton', disease: 'Aphids', symptoms: 'Curled leaves, sticky honeydew, stunted growth', identification: 'Small green insects on undersides of leaves', solution: 'Use insecticidal soap, encourage beneficial insects.' },
-        { crop: 'cotton', disease: 'Thrips', symptoms: 'Silver patches on leaves, stunted plant growth', identification: 'Tiny insects causing silvering of leaf surface', solution: 'Use blue sticky traps, spray neem oil or imidacloprid.' },
-        { crop: 'cotton', disease: 'Red Spider Mite', symptoms: 'Yellow speckling on leaves, fine webbing', identification: 'Tiny red mites on undersides, fine silk webbing', solution: 'Increase humidity, use miticides like abamectin.' },
-
-        // Sugarcane Diseases
-        { crop: 'sugarcane', disease: 'Red Rot', symptoms: 'Red discoloration inside stalks, sour smell', identification: 'Internal reddening with cross-bands, alcoholic odor', solution: 'Plant resistant varieties, use healthy seed material.' },
-        { crop: 'sugarcane', disease: 'Smut', symptoms: 'Black whip-like structures from growing points', identification: 'Long black whips emerging from shoots', solution: 'Remove affected tillers, plant disease-free setts.' },
-        { crop: 'sugarcane', disease: 'Yellow Leaf', symptoms: 'Yellowing of midrib, premature leaf death', identification: 'Bright yellow midrib, spreading to entire leaf', solution: 'Use virus-free planting material, control aphid vectors.' },
-        { crop: 'sugarcane', disease: 'Mosaic', symptoms: 'Light and dark green patches on leaves', identification: 'Mosaic pattern of light and dark green areas', solution: 'Plant resistant varieties, control aphid vectors.' },
-        { crop: 'sugarcane', disease: 'Scale Insect', symptoms: 'White waxy scales on stalks, yellowing', identification: 'White cotton-like scales attached to stalks', solution: 'Spray malathion or use systemic insecticides.' },
-
-        // Vegetable Diseases
-        { crop: 'vegetables', disease: 'Damping Off', symptoms: 'Seedling collapse at soil level', identification: 'Young seedlings fall over, stem rotted at base', solution: 'Use fungicide-treated seeds, improve drainage.' },
-        { crop: 'vegetables', disease: 'Powdery Mildew', symptoms: 'White powdery coating on leaves', identification: 'White flour-like covering on leaf surfaces', solution: 'Spray sulfur or potassium bicarbonate, improve air circulation.' },
-        { crop: 'vegetables', disease: 'Anthracnose', symptoms: 'Dark sunken spots on fruits', identification: 'Circular dark lesions with pink spore masses', solution: 'Use copper fungicides, practice crop rotation.' },
-        { crop: 'vegetables', disease: 'Aphids', symptoms: 'Curled leaves, sticky honeydew, virus transmission', identification: 'Small soft-bodied insects in colonies', solution: 'Use insecticidal soap, encourage ladybirds.' },
-        { crop: 'vegetables', disease: 'Whitefly', symptoms: 'Yellow leaves, sticky honeydew, virus spread', identification: 'Tiny white flying insects on leaf undersides', solution: 'Use yellow sticky traps, spray neem oil.' },
-
-        // Fruit Diseases
-        { crop: 'fruits', disease: 'Fruit Fly', symptoms: 'Maggots in fruits, premature fruit drop', identification: 'Small holes in fruits with larvae inside', solution: 'Use pheromone traps, spray malathion before fruit set.' },
-        { crop: 'fruits', disease: 'Anthracnose', symptoms: 'Dark spots on fruits, premature ripening', identification: 'Circular dark lesions expanding on fruits', solution: 'Spray copper fungicides, harvest at proper maturity.' },
-        { crop: 'fruits', disease: 'Scale Insects', symptoms: 'Waxy bumps on branches, yellowing leaves', identification: 'Hard or soft scales attached to stems and leaves', solution: 'Spray horticultural oil, use systemic insecticides.' },
-        { crop: 'fruits', disease: 'Mealybugs', symptoms: 'White cotton-like clusters, honeydew', identification: 'White waxy insects in clusters on stems/fruits', solution: 'Use alcohol swabs, spray insecticidal soap.' },
-        { crop: 'fruits', disease: 'Canker', symptoms: 'Raised corky lesions on fruits and leaves', identification: 'Circular raised spots with water-soaked margins', solution: 'Use copper bactericides, prune affected parts.' }
-    ];
-
-    // Filter diseases based on crop and search term
-    let filteredDiseases = diseaseDatabase;
+function closeNavOnClickOutside(event) {
+    const navbar = document.getElementById('navbar');
+    const navToggle = document.getElementById('navToggle');
     
-    if (crop) {
-        filteredDiseases = filteredDiseases.filter(d => d.crop === crop);
+    if (!navbar.contains(event.target) && !navToggle.contains(event.target)) {
+        navbar.classList.remove('active');
+        navToggle.classList.remove('active');
+        document.removeEventListener('click', closeNavOnClickOutside);
     }
-    
-    filteredDiseases = filteredDiseases.filter(d => 
-        d.disease.toLowerCase().includes(searchTerm) || 
-        d.symptoms.toLowerCase().includes(searchTerm) ||
-        d.identification.toLowerCase().includes(searchTerm)
-    );
-
-    if (filteredDiseases.length === 0) {
-        showResult(resultDiv, 'No diseases found matching your search. Try different keywords like "spots", "holes", "yellow", "wilt", etc.', 'error');
-        return;
-    }
-
-    const diseasesHTML = filteredDiseases.map(d => `
-        <div style="margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-left: 4px solid var(--primary-green); border-radius: 8px;">
-            <h5 style="color: var(--primary-green); margin-bottom: 10px;">🌾 ${d.crop.toUpperCase()}: ${d.disease}</h5>
-            <div style="margin-bottom: 8px;">
-                <strong>🔍 Symptoms:</strong> ${d.symptoms}
-            </div>
-            <div style="margin-bottom: 8px;">
-                <strong>👁️ How to Identify:</strong> ${d.identification}
-            </div>
-            <div style="background: #e8f5e8; padding: 8px; border-radius: 4px;">
-                <strong>💊 Solution:</strong> ${d.solution}
-            </div>
-        </div>
-    `).join('');
-
-    const resultHTML = `
-        <div style="text-align: left;">
-            <h4 style="color: var(--primary-green); margin-bottom: 15px;">Found ${filteredDiseases.length} Disease(s):</h4>
-            ${diseasesHTML}
-            <div style="margin-top: 15px; padding: 10px; background: #fff3cd; border-radius: 5px; font-size: 0.9rem;">
-                <strong>⚠️ Important:</strong> For severe infestations, consult your local agricultural extension officer for specific treatment recommendations.
-            </div>
-            <div style="margin-top: 10px; padding: 8px; background: #f8f9fa; border-radius: 4px; font-size: 0.8rem; color: #666;">
-                <strong>⚠️ Disclaimer:</strong> Disease information is general guidance. Regional variations in disease patterns and treatment effectiveness may occur. Always confirm diagnosis with local experts before treatment.
-            </div>
-        </div>
-    `;
-
-    showResult(resultDiv, resultHTML, 'success');
 }
 
-// Expanded Fertilizer Calculator Function
+// ==================== CALCULATOR FUNCTIONS ====================
+
+// Fertilizer Calculator
 function calculateFertilizer() {
     const crop = document.getElementById('crop-select').value;
     const area = parseFloat(document.getElementById('area-input').value);
     const resultDiv = document.getElementById('fertilizer-result');
-
+    
     if (!crop || !area || area <= 0) {
-        showResult(resultDiv, 'Please select a crop and enter a valid area.', 'error');
+        resultDiv.innerHTML = '<p style="color: red;">Please select a crop and enter valid area!</p>';
+        resultDiv.classList.add('show');
         return;
     }
-
-    // Comprehensive fertilizer requirements per acre (in kg)
+    
+    // Fertilizer requirements per acre (NPK in kg)
     const fertilizerData = {
-        rice: { urea: 50, dap: 40, mop: 20, organic: 1000, timing: '3 splits: basal, tillering, panicle initiation' },
-        wheat: { urea: 60, dap: 50, mop: 25, organic: 800, timing: '3 splits: sowing, crown root, flowering' },
-        corn: { urea: 65, dap: 45, mop: 30, organic: 1200, timing: '3 splits: sowing, knee-high, tasseling' },
-        cotton: { urea: 40, dap: 35, mop: 25, organic: 1500, timing: '4 splits: sowing, squaring, flowering, boll development' },
-        sugarcane: { urea: 120, dap: 60, mop: 40, organic: 2000, timing: '3 splits: planting, 45 days, 90 days' },
-        soybean: { urea: 15, dap: 40, mop: 30, organic: 1000, timing: '2 splits: sowing, flowering (minimal nitrogen due to fixation)' },
-        mustard: { urea: 35, dap: 25, mop: 15, organic: 800, timing: '2 splits: sowing, branching stage' },
-        groundnut: { urea: 10, dap: 50, mop: 40, organic: 1200, timing: '2 splits: sowing, pegging (low nitrogen due to fixation)' },
-        tomato: { urea: 55, dap: 60, mop: 50, organic: 1500, timing: '4 splits: transplanting, flowering, fruit set, fruit development' },
-        potato: { urea: 45, dap: 55, mop: 60, organic: 1200, timing: '3 splits: planting, hilling, tuber formation' },
-        onion: { urea: 40, dap: 35, mop: 30, organic: 1000, timing: '3 splits: transplanting, bulb initiation, bulb development' },
-        garlic: { urea: 35, dap: 30, mop: 25, organic: 800, timing: '3 splits: planting, clove formation, bulb development' },
-        chili: { urea: 45, dap: 40, mop: 35, organic: 1200, timing: '4 splits: transplanting, flowering, fruit set, harvest period' },
-        cabbage: { urea: 50, dap: 45, mop: 40, organic: 1500, timing: '3 splits: transplanting, head initiation, head development' },
-        cauliflower: { urea: 50, dap: 45, mop: 40, organic: 1500, timing: '3 splits: transplanting, curd initiation, curd development' },
-        brinjal: { urea: 45, dap: 40, mop: 35, organic: 1200, timing: '4 splits: transplanting, flowering, fruit set, continuous harvest' },
-        okra: { urea: 40, dap: 35, mop: 30, organic: 1000, timing: '3 splits: sowing, flowering, fruit development' },
-        carrot: { urea: 30, dap: 25, mop: 20, organic: 1000, timing: '2 splits: sowing, root development' },
-        radish: { urea: 25, dap: 20, mop: 15, organic: 800, timing: '2 splits: sowing, root swelling' },
-        spinach: { urea: 35, dap: 20, mop: 15, organic: 800, timing: '2 splits: sowing, leaf development' },
-        banana: { urea: 200, dap: 100, mop: 150, organic: 3000, timing: '12 monthly splits throughout the year' },
-        mango: { urea: 100, dap: 80, mop: 120, organic: 2000, timing: '3 splits: pre-flowering, fruit set, fruit development' },
-        orange: { urea: 80, dap: 60, mop: 100, organic: 1500, timing: '3 splits: pre-flowering, fruit set, fruit development' },
-        apple: { urea: 120, dap: 80, mop: 100, organic: 2000, timing: '3 splits: bud break, fruit set, fruit development' },
-        grapes: { urea: 60, dap: 40, mop: 80, organic: 1500, timing: '3 splits: bud break, fruit set, veraison' },
-        papaya: { urea: 80, dap: 60, mop: 100, organic: 1500, timing: '6 splits every 2 months' },
-        guava: { urea: 60, dap: 40, mop: 80, organic: 1200, timing: '3 splits: pre-flowering, fruit set, fruit development' },
-        pomegranate: { urea: 50, dap: 40, mop: 60, organic: 1200, timing: '3 splits: pre-flowering, fruit set, fruit development' },
-        chickpea: { urea: 10, dap: 40, mop: 30, organic: 1000, timing: '2 splits: sowing, flowering (minimal nitrogen due to fixation)' },
-        lentil: { urea: 8, dap: 35, mop: 25, organic: 800, timing: '2 splits: sowing, flowering (minimal nitrogen due to fixation)' },
-        pigeon_pea: { urea: 12, dap: 45, mop: 35, organic: 1200, timing: '2 splits: sowing, flowering (minimal nitrogen due to fixation)' },
-        black_gram: { urea: 8, dap: 30, mop: 20, organic: 800, timing: '2 splits: sowing, flowering (minimal nitrogen due to fixation)' },
-        green_gram: { urea: 8, dap: 30, mop: 20, organic: 800, timing: '2 splits: sowing, flowering (minimal nitrogen due to fixation)' },
-        field_pea: { urea: 10, dap: 35, mop: 25, organic: 800, timing: '2 splits: sowing, flowering (minimal nitrogen due to fixation)' },
-        sesame: { urea: 20, dap: 25, mop: 15, organic: 600, timing: '2 splits: sowing, flowering' },
-        sunflower: { urea: 30, dap: 40, mop: 25, organic: 1000, timing: '2 splits: sowing, head formation' },
-        safflower: { urea: 25, dap: 30, mop: 20, organic: 800, timing: '2 splits: sowing, branching' },
-        castor: { urea: 35, dap: 40, mop: 25, organic: 1000, timing: '3 splits: sowing, flowering, spike development' },
-        coconut: { urea: 500, dap: 320, mop: 1200, organic: 5000, timing: '2 splits per year: pre-monsoon, post-monsoon' },
-        arecanut: { urea: 200, dap: 150, mop: 300, organic: 2000, timing: '2 splits per year: pre-monsoon, post-monsoon' },
-        cardamom: { urea: 30, dap: 30, mop: 60, organic: 1500, timing: '3 splits: pre-monsoon, mid-monsoon, post-monsoon' },
-        black_pepper: { urea: 50, dap: 50, mop: 100, organic: 2000, timing: '3 splits: pre-monsoon, mid-monsoon, post-monsoon' },
-        turmeric: { urea: 60, dap: 40, mop: 80, organic: 1500, timing: '3 splits: planting, tillering, rhizome development' },
-        ginger: { urea: 50, dap: 35, mop: 70, organic: 1500, timing: '3 splits: planting, tillering, rhizome development' },
-        coriander: { urea: 20, dap: 25, mop: 15, organic: 600, timing: '2 splits: sowing, branching' },
-        cumin: { urea: 15, dap: 20, mop: 10, organic: 500, timing: '2 splits: sowing, branching' },
-        fenugreek: { urea: 15, dap: 25, mop: 15, organic: 600, timing: '2 splits: sowing, branching' },
-        fennel: { urea: 25, dap: 30, mop: 20, organic: 800, timing: '2 splits: sowing, umbel formation' },
-        jute: { urea: 40, dap: 20, mop: 15, organic: 1000, timing: '2 splits: sowing, fiber development' },
-        tea: { urea: 150, dap: 50, mop: 100, organic: 2000, timing: '6 splits throughout the year' },
-        coffee: { urea: 80, dap: 60, mop: 120, organic: 1500, timing: '3 splits: pre-monsoon, post-monsoon, post-harvest' },
-        rubber: { urea: 100, dap: 50, mop: 150, organic: 2000, timing: '2 splits per year: beginning and end of monsoon' }
+        rice: { n: 120, p: 60, k: 40, urea: 260, dap: 130, mop: 67 },
+        wheat: { n: 120, p: 60, k: 40, urea: 260, dap: 130, mop: 67 },
+        corn: { n: 120, p: 60, k: 40, urea: 260, dap: 130, mop: 67 },
+        tomato: { n: 200, p: 100, k: 100, urea: 435, dap: 217, mop: 167 },
+        potato: { n: 120, p: 80, k: 100, urea: 260, dap: 174, mop: 167 },
+        cotton: { n: 120, p: 60, k: 60, urea: 260, dap: 130, mop: 100 },
+        sugarcane: { n: 280, p: 90, k: 140, urea: 608, dap: 196, mop: 233 },
+        soybean: { n: 30, p: 80, k: 40, urea: 65, dap: 174, mop: 67 },
+        mustard: { n: 80, p: 40, k: 40, urea: 174, dap: 87, mop: 67 },
+        groundnut: { n: 25, p: 50, k: 75, urea: 54, dap: 109, mop: 125 },
+        onion: { n: 100, p: 50, k: 50, urea: 217, dap: 109, mop: 83 },
+        garlic: { n: 100, p: 50, k: 50, urea: 217, dap: 109, mop: 83 },
+        chili: { n: 150, p: 75, k: 75, urea: 326, dap: 163, mop: 125 },
+        cabbage: { n: 120, p: 80, k: 80, urea: 260, dap: 174, mop: 133 },
+        cauliflower: { n: 120, p: 80, k: 80, urea: 260, dap: 174, mop: 133 },
+        brinjal: { n: 100, p: 50, k: 50, urea: 217, dap: 109, mop: 83 },
+        okra: { n: 100, p: 60, k: 60, urea: 217, dap: 130, mop: 100 },
+        carrot: { n: 100, p: 50, k: 100, urea: 217, dap: 109, mop: 167 },
+        radish: { n: 60, p: 30, k: 30, urea: 130, dap: 65, mop: 50 },
+        spinach: { n: 100, p: 50, k: 50, urea: 217, dap: 109, mop: 83 },
+        banana: { n: 200, p: 60, k: 300, urea: 435, dap: 130, mop: 500 },
+        mango: { n: 1000, p: 500, k: 1000, urea: 2174, dap: 1087, mop: 1667 },
+        orange: { n: 400, p: 200, k: 400, urea: 870, dap: 435, mop: 667 },
+        apple: { n: 400, p: 200, k: 400, urea: 870, dap: 435, mop: 667 },
+        grapes: { n: 80, p: 40, k: 80, urea: 174, dap: 87, mop: 133 },
+        papaya: { n: 200, p: 200, k: 250, urea: 435, dap: 435, mop: 417 },
+        guava: { n: 600, p: 200, k: 400, urea: 1304, dap: 435, mop: 667 },
+        pomegranate: { n: 400, p: 200, k: 400, urea: 870, dap: 435, mop: 667 },
+        chickpea: { n: 20, p: 40, k: 20, urea: 43, dap: 87, mop: 33 },
+        lentil: { n: 20, p: 40, k: 20, urea: 43, dap: 87, mop: 33 },
+        pigeon_pea: { n: 25, p: 50, k: 25, urea: 54, dap: 109, mop: 42 },
+        black_gram: { n: 25, p: 50, k: 25, urea: 54, dap: 109, mop: 42 },
+        green_gram: { n: 25, p: 50, k: 25, urea: 54, dap: 109, mop: 42 },
+        field_pea: { n: 25, p: 50, k: 25, urea: 54, dap: 109, mop: 42 },
+        sesame: { n: 40, p: 20, k: 20, urea: 87, dap: 43, mop: 33 },
+        sunflower: { n: 60, p: 60, k: 40, urea: 130, dap: 130, mop: 67 },
+        safflower: { n: 60, p: 30, k: 30, urea: 130, dap: 65, mop: 50 },
+        castor: { n: 60, p: 30, k: 30, urea: 130, dap: 65, mop: 50 },
+        coconut: { n: 500, p: 320, k: 1200, urea: 1087, dap: 696, mop: 2000 },
+        arecanut: { n: 100, p: 40, k: 140, urea: 217, dap: 87, mop: 233 },
+        cardamom: { n: 75, p: 75, k: 150, urea: 163, dap: 163, mop: 250 },
+        black_pepper: { n: 50, p: 50, k: 125, urea: 109, dap: 109, mop: 208 },
+        turmeric: { n: 60, p: 30, k: 120, urea: 130, dap: 65, mop: 200 },
+        ginger: { n: 75, p: 50, k: 50, urea: 163, dap: 109, mop: 83 },
+        coriander: { n: 40, p: 30, k: 20, urea: 87, dap: 65, mop: 33 },
+        cumin: { n: 30, p: 15, k: 15, urea: 65, dap: 33, mop: 25 },
+        fenugreek: { n: 25, p: 25, k: 25, urea: 54, dap: 54, mop: 42 },
+        fennel: { n: 100, p: 50, k: 50, urea: 217, dap: 109, mop: 83 },
+        jute: { n: 60, p: 30, k: 30, urea: 130, dap: 65, mop: 50 },
+        tea: { n: 150, p: 50, k: 50, urea: 326, dap: 109, mop: 83 },
+        coffee: { n: 200, p: 200, k: 200, urea: 435, dap: 435, mop: 333 },
+        rubber: { n: 100, p: 40, k: 40, urea: 217, dap: 87, mop: 67 }
     };
-
-    const requirements = fertilizerData[crop];
-    if (!requirements) {
-        showResult(resultDiv, 'Fertilizer data not available for this crop. Please select another crop.', 'error');
+    
+    const cropData = fertilizerData[crop];
+    if (!cropData) {
+        resultDiv.innerHTML = '<p style="color: red;">Crop data not available!</p>';
+        resultDiv.classList.add('show');
         return;
     }
-
-    const urea = (requirements.urea * area).toFixed(1);
-    const dap = (requirements.dap * area).toFixed(1);
-    const mop = (requirements.mop * area).toFixed(1);
-    const organic = (requirements.organic * area).toFixed(0);
-
-    const resultHTML = `
-        <div style="text-align: left;">
-            <h4 style="color: var(--primary-green); margin-bottom: 15px;">Fertilizer Requirements for ${area} acre(s) of ${crop.charAt(0).toUpperCase() + crop.slice(1)}:</h4>
-            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
-                <h5 style="color: var(--primary-green); margin-bottom: 10px;">📦 Fertilizer Quantities:</h5>
-                <p><i class="fas fa-leaf" style="color: #4caf50;"></i> <strong>Urea:</strong> ${urea} kg</p>
-                <p><i class="fas fa-seedling" style="color: #8bc34a;"></i> <strong>DAP:</strong> ${dap} kg</p>
-                <p><i class="fas fa-spa" style="color: #009688;"></i> <strong>MOP:</strong> ${mop} kg</p>
-                <p><i class="fas fa-recycle" style="color: #795548;"></i> <strong>Organic Compost:</strong> ${organic} kg</p>
-            </div>
-            <div style="background: #e3f2fd; padding: 12px; border-radius: 6px; margin-bottom: 12px;">
-                <h5 style="color: var(--primary-green); margin-bottom: 5px;">⏰ Application Timing:</h5>
-                <p style="margin: 0; font-size: 0.9rem;">${requirements.timing}</p>
-            </div>
-            <div style="background: #e8f5e8; padding: 10px; border-radius: 5px; font-size: 0.9rem;">
-                <strong>💡 Pro Tip:</strong> Apply fertilizers based on soil test results for optimal crop yield and soil health.
-            </div>
-            <div style="margin-top: 10px; padding: 8px; background: #f8f9fa; border-radius: 4px; font-size: 0.8rem; color: #666;">
-                <strong>⚠️ Disclaimer:</strong> Values are general recommendations per acre. Actual requirements vary by soil type, climate, variety, and region. Consult local agricultural extension officers for precise recommendations.
-            </div>
+    
+    const totalN = (cropData.n * area).toFixed(1);
+    const totalP = (cropData.p * area).toFixed(1);
+    const totalK = (cropData.k * area).toFixed(1);
+    const totalUrea = (cropData.urea * area).toFixed(1);
+    const totalDAP = (cropData.dap * area).toFixed(1);
+    const totalMOP = (cropData.mop * area).toFixed(1);
+    
+    const cost = (totalUrea * 6 + totalDAP * 27 + totalMOP * 17).toFixed(0);
+    
+    resultDiv.innerHTML = `
+        <h4>🧮 Fertilizer Requirements for ${area} acres of ${crop.charAt(0).toUpperCase() + crop.slice(1)}</h4>
+        <div style="background: #e8f5e8; padding: 15px; border-radius: 8px; margin: 10px 0;">
+            <h5>📊 Nutrient Requirements:</h5>
+            <p><strong>Nitrogen (N):</strong> ${totalN} kg</p>
+            <p><strong>Phosphorus (P):</strong> ${totalP} kg</p>
+            <p><strong>Potassium (K):</strong> ${totalK} kg</p>
+        </div>
+        <div style="background: #fff3e0; padding: 15px; border-radius: 8px; margin: 10px 0;">
+            <h5>🛒 Fertilizer Quantities:</h5>
+            <p><strong>Urea (46% N):</strong> ${totalUrea} kg</p>
+            <p><strong>DAP (18-46-0):</strong> ${totalDAP} kg</p>
+            <p><strong>MOP (0-0-60):</strong> ${totalMOP} kg</p>
+        </div>
+        <div style="background: #f3e5f5; padding: 15px; border-radius: 8px; margin: 10px 0;">
+            <h5>💰 Estimated Cost:</h5>
+            <p><strong>Total Cost:</strong> ₹${cost}</p>
+            <small>*Prices are approximate and may vary by location</small>
+        </div>
+        <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin: 10px 0;">
+            <h5>💡 Application Tips:</h5>
+            <p>• Apply fertilizers in 2-3 splits during the growing season</p>
+            <p>• Apply phosphorus at planting time</p>
+            <p>• Split nitrogen application for better efficiency</p>
         </div>
     `;
-
-    showResult(resultDiv, resultHTML, 'success');
+    resultDiv.classList.add('show');
 }
 
-// Irrigation Calculator Function
+// Irrigation Calculator
 function calculateIrrigation() {
     const landSize = parseFloat(document.getElementById('land-size').value);
     const crop = document.getElementById('irrigation-crop').value;
     const resultDiv = document.getElementById('irrigation-result');
-
-    if (!crop || !landSize || landSize <= 0) {
-        showResult(resultDiv, 'Please select a crop and enter a valid land size.', 'error');
+    
+    if (!landSize || !crop || landSize <= 0) {
+        resultDiv.innerHTML = '<p style="color: red;">Please enter valid land size and select a crop!</p>';
+        resultDiv.classList.add('show');
         return;
     }
-
-    // Comprehensive water requirements per acre (in liters)
-    const waterData = {
-        rice: { daily: 15000, season: 120, schedule: 'Continuous flooding, 5 cm water during growing season', method: 'Flood irrigation' },
-        wheat: { daily: 8000, season: 100, schedule: '5-6 irrigations, each 5-6 cm depth', method: 'Furrow irrigation' },
-        corn: { daily: 10000, season: 90, schedule: '3-4 irrigations at knee-height and flowering stage', method: 'Sprinkler irrigation' },
-        cotton: { daily: 12000, season: 160, schedule: '6-8 irrigations from squaring to boll development', method: 'Drip irrigation' },
-        sugarcane: { daily: 20000, season: 365, schedule: '30-35 irrigations throughout year', method: 'Furrow irrigation' },
-        soybean: { daily: 6000, season: 90, schedule: '2-3 irrigations during flowering and pod filling', method: 'Sprinkler irrigation' },
-        mustard: { daily: 4000, season: 120, schedule: '3-4 irrigations during branching and flowering', method: 'Furrow irrigation' },
-        groundnut: { daily: 5000, season: 120, schedule: '4-5 irrigations during pegging and pod development', method: 'Drip irrigation' },
-        tomato: { daily: 8000, season: 120, schedule: 'Daily irrigation in small quantities', method: 'Drip irrigation' },
-        potato: { daily: 6000, season: 100, schedule: '8-10 irrigations light and frequent', method: 'Sprinkler irrigation' },
-        onion: { daily: 5000, season: 150, schedule: '15-20 irrigations light and frequent', method: 'Drip irrigation' },
-        garlic: { daily: 4000, season: 180, schedule: '12-15 irrigations avoiding waterlogging', method: 'Furrow irrigation' },
-        chili: { daily: 6000, season: 180, schedule: 'Frequent light irrigations', method: 'Drip irrigation' },
-        cabbage: { daily: 7000, season: 90, schedule: '8-10 irrigations during head formation', method: 'Sprinkler irrigation' },
-        cauliflower: { daily: 7000, season: 100, schedule: '10-12 irrigations during curd development', method: 'Sprinkler irrigation' },
-        brinjal: { daily: 8000, season: 180, schedule: 'Regular irrigation avoiding water stress', method: 'Drip irrigation' },
-        okra: { daily: 6000, season: 120, schedule: '6-8 irrigations during flowering and fruiting', method: 'Furrow irrigation' },
-        carrot: { daily: 5000, season: 100, schedule: '6-8 light irrigations for root development', method: 'Sprinkler irrigation' },
-        radish: { daily: 4000, season: 45, schedule: '4-5 irrigations during root swelling', method: 'Sprinkler irrigation' },
-        spinach: { daily: 3000, season: 45, schedule: '6-8 light irrigations', method: 'Sprinkler irrigation' },
-        banana: { daily: 25000, season: 365, schedule: 'Daily irrigation throughout year', method: 'Drip irrigation' },
-        mango: { daily: 15000, season: 365, schedule: '15-20 irrigations during dry season', method: 'Basin irrigation' },
-        orange: { daily: 12000, season: 365, schedule: '12-15 irrigations avoiding water stress', method: 'Drip irrigation' },
-        apple: { daily: 10000, season: 200, schedule: '10-12 irrigations during fruit development', method: 'Drip irrigation' },
-        grapes: { daily: 8000, season: 180, schedule: '8-10 irrigations from fruit set to harvest', method: 'Drip irrigation' },
-        papaya: { daily: 15000, season: 365, schedule: 'Regular irrigation throughout year', method: 'Basin irrigation' },
-        guava: { daily: 10000, season: 365, schedule: '12-15 irrigations during flowering and fruiting', method: 'Basin irrigation' },
-        pomegranate: { daily: 8000, season: 180, schedule: '8-10 irrigations during fruit development', method: 'Drip irrigation' },
-        chickpea: { daily: 4000, season: 120, schedule: '2-3 irrigations during flowering and pod filling', method: 'Furrow irrigation' },
-        lentil: { daily: 3500, season: 110, schedule: '2-3 irrigations during flowering', method: 'Furrow irrigation' },
-        pigeon_pea: { daily: 5000, season: 180, schedule: '3-4 irrigations during flowering and pod development', method: 'Furrow irrigation' },
-        black_gram: { daily: 3000, season: 70, schedule: '2-3 irrigations during flowering', method: 'Furrow irrigation' },
-        green_gram: { daily: 3000, season: 65, schedule: '2-3 irrigations during flowering', method: 'Furrow irrigation' },
-        field_pea: { daily: 4000, season: 120, schedule: '3-4 irrigations during pod development', method: 'Furrow irrigation' },
-        sesame: { daily: 3000, season: 90, schedule: '3-4 irrigations avoiding excess moisture', method: 'Furrow irrigation' },
-        sunflower: { daily: 6000, season: 90, schedule: '4-5 irrigations during head formation', method: 'Furrow irrigation' },
-        safflower: { daily: 4000, season: 120, schedule: '3-4 irrigations during branching and flowering', method: 'Furrow irrigation' },
-        castor: { daily: 5000, season: 150, schedule: '4-5 irrigations during spike development', method: 'Furrow irrigation' },
-        coconut: { daily: 40000, season: 365, schedule: 'Daily irrigation in coastal areas', method: 'Basin irrigation' },
-        arecanut: { daily: 30000, season: 365, schedule: 'Regular irrigation throughout year', method: 'Basin irrigation' },
-        cardamom: { daily: 8000, season: 365, schedule: 'Frequent light irrigations', method: 'Sprinkler irrigation' },
-        black_pepper: { daily: 10000, season: 365, schedule: 'Regular irrigation avoiding waterlogging', method: 'Drip irrigation' },
-        turmeric: { daily: 8000, season: 270, schedule: '15-20 irrigations during rhizome development', method: 'Furrow irrigation' },
-        ginger: { daily: 8000, season: 240, schedule: '12-15 irrigations during rhizome development', method: 'Furrow irrigation' },
-        coriander: { daily: 3000, season: 100, schedule: '4-5 light irrigations', method: 'Sprinkler irrigation' },
-        cumin: { daily: 2500, season: 120, schedule: '3-4 irrigations avoiding excess moisture', method: 'Furrow irrigation' },
-        fenugreek: { daily: 3000, season: 120, schedule: '4-5 irrigations during pod development', method: 'Furrow irrigation' },
-        fennel: { daily: 4000, season: 150, schedule: '6-8 irrigations during umbel formation', method: 'Furrow irrigation' },
-        jute: { daily: 8000, season: 120, schedule: '6-8 irrigations during fiber development', method: 'Furrow irrigation' },
-        tea: { daily: 6000, season: 365, schedule: 'Frequent light irrigations year-round', method: 'Sprinkler irrigation' },
-        coffee: { daily: 8000, season: 365, schedule: '10-12 irrigations during dry season', method: 'Drip irrigation' },
-        rubber: { daily: 10000, season: 365, schedule: 'Regular irrigation during dry months', method: 'Basin irrigation' }
+    
+    // Water requirements in inches per season
+    const waterRequirements = {
+        rice: { water: 48, frequency: 'Continuous flooding', method: 'Flood irrigation' },
+        wheat: { water: 18, frequency: '4-5 irrigations', method: 'Furrow/Sprinkler' },
+        corn: { water: 22, frequency: '6-8 irrigations', method: 'Furrow/Drip' },
+        cotton: { water: 24, frequency: '8-10 irrigations', method: 'Furrow/Drip' },
+        sugarcane: { water: 60, frequency: '15-20 irrigations', method: 'Furrow/Drip' },
+        soybean: { water: 20, frequency: '3-4 irrigations', method: 'Sprinkler/Drip' },
+        mustard: { water: 12, frequency: '2-3 irrigations', method: 'Furrow' },
+        groundnut: { water: 20, frequency: '4-5 irrigations', method: 'Furrow/Sprinkler' },
+        tomato: { water: 24, frequency: '15-20 irrigations', method: 'Drip' },
+        potato: { water: 16, frequency: '6-8 irrigations', method: 'Sprinkler/Furrow' },
+        onion: { water: 20, frequency: '10-12 irrigations', method: 'Drip/Furrow' },
+        garlic: { water: 18, frequency: '8-10 irrigations', method: 'Drip/Furrow' },
+        chili: { water: 22, frequency: '12-15 irrigations', method: 'Drip' },
+        cabbage: { water: 18, frequency: '8-10 irrigations', method: 'Sprinkler/Drip' },
+        cauliflower: { water: 18, frequency: '8-10 irrigations', method: 'Sprinkler/Drip' },
+        brinjal: { water: 20, frequency: '10-12 irrigations', method: 'Drip' },
+        okra: { water: 18, frequency: '8-10 irrigations', method: 'Drip/Furrow' },
+        carrot: { water: 16, frequency: '6-8 irrigations', method: 'Sprinkler' },
+        radish: { water: 12, frequency: '4-5 irrigations', method: 'Sprinkler' },
+        spinach: { water: 10, frequency: '6-8 irrigations', method: 'Sprinkler' },
+        banana: { water: 72, frequency: 'Year-round', method: 'Drip' },
+        mango: { water: 40, frequency: '8-10 irrigations', method: 'Basin/Drip' },
+        orange: { water: 36, frequency: '10-12 irrigations', method: 'Basin/Drip' },
+        apple: { water: 30, frequency: '8-10 irrigations', method: 'Sprinkler/Drip' },
+        grapes: { water: 24, frequency: '15-20 irrigations', method: 'Drip' },
+        papaya: { water: 48, frequency: 'Year-round', method: 'Drip' },
+        guava: { water: 36, frequency: '10-12 irrigations', method: 'Basin/Drip' },
+        pomegranate: { water: 28, frequency: '12-15 irrigations', method: 'Drip' },
+        chickpea: { water: 14, frequency: '2-3 irrigations', method: 'Furrow' },
+        lentil: { water: 12, frequency: '2-3 irrigations', method: 'Furrow' },
+        pigeon_pea: { water: 16, frequency: '3-4 irrigations', method: 'Furrow' },
+        black_gram: { water: 12, frequency: '2-3 irrigations', method: 'Furrow' },
+        green_gram: { water: 12, frequency: '2-3 irrigations', method: 'Furrow' },
+        field_pea: { water: 14, frequency: '3-4 irrigations', method: 'Furrow' },
+        sesame: { water: 14, frequency: '3-4 irrigations', method: 'Furrow' },
+        sunflower: { water: 20, frequency: '4-5 irrigations', method: 'Furrow/Sprinkler' },
+        safflower: { water: 16, frequency: '3-4 irrigations', method: 'Furrow' },
+        castor: { water: 18, frequency: '4-5 irrigations', method: 'Furrow' },
+        coconut: { water: 60, frequency: 'Year-round', method: 'Basin/Drip' },
+        arecanut: { water: 72, frequency: 'Year-round', method: 'Basin/Drip' },
+        cardamom: { water: 80, frequency: 'Year-round', method: 'Sprinkler' },
+        black_pepper: { water: 60, frequency: 'Year-round', method: 'Drip' },
+        turmeric: { water: 36, frequency: '15-20 irrigations', method: 'Furrow/Drip' },
+        ginger: { water: 40, frequency: '15-20 irrigations', method: 'Sprinkler/Drip' },
+        coriander: { water: 12, frequency: '4-5 irrigations', method: 'Sprinkler' },
+        cumin: { water: 10, frequency: '3-4 irrigations', method: 'Furrow' },
+        fenugreek: { water: 12, frequency: '3-4 irrigations', method: 'Furrow' },
+        fennel: { water: 16, frequency: '5-6 irrigations', method: 'Furrow' },
+        jute: { water: 30, frequency: '8-10 irrigations', method: 'Flood' },
+        tea: { water: 60, frequency: 'Year-round', method: 'Sprinkler' },
+        coffee: { water: 48, frequency: 'Year-round', method: 'Drip' },
+        rubber: { water: 72, frequency: 'Year-round', method: 'Basin' }
     };
-
-    const requirements = waterData[crop];
-    if (!requirements) {
-        showResult(resultDiv, 'Irrigation data not available for this crop. Please select another crop.', 'error');
+    
+    const cropData = waterRequirements[crop];
+    if (!cropData) {
+        resultDiv.innerHTML = '<p style="color: red;">Crop data not available!</p>';
+        resultDiv.classList.add('show');
         return;
     }
-
-    const dailyWater = (requirements.daily * landSize).toFixed(0);
-    const seasonalWater = (requirements.daily * requirements.season * landSize / 1000).toFixed(1);
-    const weeklyWater = (dailyWater * 7 / 1000).toFixed(1);
-
-    const resultHTML = `
-        <div style="text-align: left;">
-            <h4 style="color: var(--primary-green); margin-bottom: 15px;">Irrigation Plan for ${landSize} acre(s) of ${crop.charAt(0).toUpperCase() + crop.slice(1)}:</h4>
-            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
-                <h5 style="color: var(--primary-green); margin-bottom: 10px;">💧 Water Requirements:</h5>
-                <p><i class="fas fa-tint" style="color: #2196f3;"></i> <strong>Daily:</strong> ${new Intl.NumberFormat().format(dailyWater)} liters</p>
-                <p><i class="fas fa-calendar-week" style="color: #03a9f4;"></i> <strong>Weekly:</strong> ${weeklyWater} thousand liters</p>
-                <p><i class="fas fa-calendar" style="color: #00bcd4;"></i> <strong>Seasonal:</strong> ${seasonalWater} thousand liters</p>
-            </div>
-            <div style="background: #e8f5e8; padding: 12px; border-radius: 6px; margin-bottom: 12px;">
-                <h5 style="color: var(--primary-green); margin-bottom: 5px;">📅 Irrigation Schedule:</h5>
-                <p style="margin: 0; font-size: 0.9rem;">${requirements.schedule}</p>
-            </div>
-            <div style="background: #fff3e0; padding: 12px; border-radius: 6px; margin-bottom: 12px;">
-                <h5 style="color: var(--primary-green); margin-bottom: 5px;">🚿 Recommended Method:</h5>
-                <p style="margin: 0; font-size: 0.9rem;">${requirements.method}</p>
-            </div>
-            <div style="background: #e3f2fd; padding: 10px; border-radius: 5px; font-size: 0.9rem;">
-                <strong>💡 Pro Tip:</strong> Use drip irrigation to save 30-50% water and increase crop yields with better water use efficiency.
-            </div>
-            <div style="margin-top: 10px; padding: 8px; background: #f8f9fa; border-radius: 4px; font-size: 0.8rem; color: #666;">
-                <strong>⚠️ Disclaimer:</strong> Water requirements vary by soil type, climate, and growing conditions. Values are per acre estimates. Adjust based on local conditions and weather patterns.
-            </div>
+    
+    // Convert inches to liters per acre (1 inch = 27,154 liters per acre)
+    const litersPerAcre = cropData.water * 27154;
+    const totalLiters = (litersPerAcre * landSize).toFixed(0);
+    const totalCubicMeters = (totalLiters / 1000).toFixed(1);
+    
+    resultDiv.innerHTML = `
+        <h4>💧 Irrigation Plan for ${landSize} acres of ${crop.charAt(0).toUpperCase() + crop.slice(1)}</h4>
+        <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin: 10px 0;">
+            <h5>📊 Water Requirements:</h5>
+            <p><strong>Total Water Needed:</strong> ${totalLiters} liters (${totalCubicMeters} cubic meters)</p>
+            <p><strong>Water per Acre:</strong> ${litersPerAcre.toLocaleString()} liters</p>
+            <p><strong>Irrigation Depth:</strong> ${cropData.water} inches</p>
+        </div>
+        <div style="background: #e8f5e8; padding: 15px; border-radius: 8px; margin: 10px 0;">
+            <h5>🚿 Irrigation Schedule:</h5>
+            <p><strong>Frequency:</strong> ${cropData.frequency}</p>
+            <p><strong>Recommended Method:</strong> ${cropData.method}</p>
+        </div>
+        <div style="background: #fff3e0; padding: 15px; border-radius: 8px; margin: 10px 0;">
+            <h5>💡 Water Management Tips:</h5>
+            <p>• Monitor soil moisture regularly</p>
+            <p>• Irrigate early morning or evening</p>
+            <p>• Use mulching to reduce water loss</p>
+            <p>• Consider drip irrigation for water efficiency</p>
+        </div>
+        <div style="background: #f3e5f5; padding: 15px; border-radius: 8px; margin: 10px 0;">
+            <h5>⚡ Efficiency Tips:</h5>
+            <p>• Drip irrigation saves 30-50% water</p>
+            <p>• Sprinkler irrigation saves 20-30% water</p>
+            <p>• Check for leaks in irrigation system</p>
         </div>
     `;
-
-    showResult(resultDiv, resultHTML, 'success');
+    resultDiv.classList.add('show');
 }
 
-// Show Result Helper Function
-function showResult(resultDiv, content, type) {
-    resultDiv.innerHTML = content;
-    resultDiv.className = `result show ${type}`;
+// Seed Quality Checker
+function checkSeedQuality() {
+    const seedType = document.getElementById('seed-select').value;
+    const resultDiv = document.getElementById('seed-quality-result');
     
-    // Add different styling based on type
-    if (type === 'error') {
-        resultDiv.style.background = '#ffebee';
-        resultDiv.style.borderColor = '#f44336';
-        resultDiv.style.color = '#d32f2f';
-    } else {
-        resultDiv.style.background = '#fff9c4';
-        resultDiv.style.borderColor = '#ffc107';
-        resultDiv.style.color = '#1b5e20';
+    if (!seedType) {
+        resultDiv.innerHTML = '<p style="color: red;">Please select a seed type!</p>';
+        resultDiv.classList.add('show');
+        return;
     }
-
-    // Scroll to result
-    setTimeout(() => {
-        resultDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }, 100);
+    
+    const seedTests = {
+        wheat: {
+            tests: [
+                'Physical Purity Test: Remove broken, damaged, and foreign seeds',
+                'Germination Test: 100 seeds in wet cloth for 7 days (>85% should germinate)',
+                'Moisture Test: Should be below 12% for storage',
+                'Weight Test: 1000 seed weight should be 35-45g'
+            ],
+            tips: [
+                'Seeds should be uniform in size and color',
+                'No fungal growth or bad smell',
+                'Store in dry, cool place',
+                'Use certified seeds from authorized dealers'
+            ]
+        },
+        rice: {
+            tests: [
+                'Physical Purity Test: Remove chaff, broken grains, and weeds',
+                'Germination Test: 100 seeds in petri dish for 14 days (>80% germination)',
+                'Moisture Test: Should be below 14% for storage',
+                'Float Test: Good seeds sink in water, damaged ones float'
+            ],
+            tips: [
+                'Seeds should be plump and heavy',
+                'Golden yellow color for most varieties',
+                'No black or discolored grains',
+                'Treat seeds with fungicide before sowing'
+            ]
+        },
+        corn: {
+            tests: [
+                'Physical Purity Test: Remove broken kernels and foreign matter',
+                'Germination Test: 100 seeds in sand/soil for 7 days (>90% germination)',
+                'Moisture Test: Should be below 14% for storage',
+                'Size Grading: Uniform kernel size'
+            ],
+            tips: [
+                'Kernels should be bright and shiny',
+                'No insect damage or mold',
+                'Store in moisture-proof containers',
+                'Check for genetic purity'
+            ]
+        },
+        cotton: {
+            tests: [
+                'Physical Purity Test: Remove lint, broken seeds, and debris',
+                'Germination Test: 400 seeds in sand for 10 days (>75% germination)',
+                'Moisture Test: Should be below 12% for storage',
+                'Acid Delinting: For better germination'
+            ],
+            tips: [
+                'Seeds should be dark gray to black',
+                'No cracked or damaged seeds',
+                'Delinted seeds germinate better',
+                'Use only certified hybrid seeds'
+            ]
+        },
+        mustard: {
+            tests: [
+                'Physical Purity Test: Remove small seeds and foreign matter',
+                'Germination Test: 100 seeds in blotter paper for 7 days (>85% germination)',
+                'Moisture Test: Should be below 9% for storage',
+                'Oil Content Test: Higher oil content indicates quality'
+            ],
+            tips: [
+                'Seeds should be round and reddish-brown',
+                'No shriveled or immature seeds',
+                'Store in airtight containers',
+                'Avoid seeds with bitter taste'
+            ]
+        },
+        soybean: {
+            tests: [
+                'Physical Purity Test: Remove broken beans and foreign seeds',
+                'Germination Test: 100 seeds in sand for 7 days (>85% germination)',
+                'Moisture Test: Should be below 12% for storage',
+                'Protein Test: Higher protein content preferred'
+            ],
+            tips: [
+                'Seeds should be cream to yellow colored',
+                'No wrinkled or cracked beans',
+                'Uniform size and shape',
+                'Inoculate with Rhizobium before sowing'
+            ]
+        },
+        groundnut: {
+            tests: [
+                'Physical Purity Test: Remove broken pods and kernels',
+                'Germination Test: 100 kernels in sand for 10 days (>70% germination)',
+                'Moisture Test: Should be below 10% for storage',
+                'Kernel Test: Remove shriveled kernels'
+            ],
+            tips: [
+                'Kernels should be pink to red colored',
+                'No rancid smell or oil stains',
+                'Store in cool, dry place',
+                'Check for aflatoxin contamination'
+            ]
+        },
+        sugarcane: {
+            tests: [
+                'Bud Viability Test: Check for healthy, prominent buds',
+                'Node Test: 3-4 nodes per sett recommended',
+                'Disease Test: No red rot or other diseases',
+                'Age Test: 8-10 month old cane preferred'
+            ],
+            tips: [
+                'Setts should be from disease-free mother plants',
+                'Buds should be plump and healthy',
+                'Treat setts with fungicide',
+                'Plant immediately after cutting'
+            ]
+        },
+        pulses: {
+            tests: [
+                'Physical Purity Test: Remove broken and immature seeds',
+                'Germination Test: 100 seeds in sand for 10 days (>80% germination)',
+                'Moisture Test: Should be below 12% for storage',
+                'Hard Seed Test: Scarify hard seeds for better germination'
+            ],
+            tips: [
+                'Seeds should be uniform in color',
+                'No insect holes or damage',
+                'Inoculate with specific Rhizobium',
+                'Store in insect-proof containers'
+            ]
+        },
+        vegetables: {
+            tests: [
+                'Physical Purity Test: Remove chaff and foreign matter',
+                'Germination Test: 100 seeds in petri dish (varies by crop)',
+                'Moisture Test: Should be below 8-12% depending on crop',
+                'Vigor Test: Check seedling growth rate'
+            ],
+            tips: [
+                'Buy from reputable seed companies',
+                'Check expiry date on packets',
+                'Store in cool, dry conditions',
+                'Test germination before large scale sowing'
+            ]
+        }
+    };
+    
+    const seedData = seedTests[seedType];
+    if (!seedData) {
+        resultDiv.innerHTML = '<p style="color: red;">Seed data not available!</p>';
+        resultDiv.classList.add('show');
+        return;
+    }
+    
+    let testsHtml = seedData.tests.map((test, index) => 
+        `<p><strong>${index + 1}.</strong> ${test}</p>`
+    ).join('');
+    
+    let tipsHtml = seedData.tips.map(tip => 
+        `<p>• ${tip}</p>`
+    ).join('');
+    
+    resultDiv.innerHTML = `
+        <h4>🌱 Seed Quality Tests for ${seedType.charAt(0).toUpperCase() + seedType.slice(1)}</h4>
+        <div style="background: #e8f5e8; padding: 15px; border-radius: 8px; margin: 10px 0;">
+            <h5>🧪 Quality Tests:</h5>
+            ${testsHtml}
+        </div>
+        <div style="background: #fff3e0; padding: 15px; border-radius: 8px; margin: 10px 0;">
+            <h5>💡 Quality Tips:</h5>
+            ${tipsHtml}
+        </div>
+        <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin: 10px 0;">
+            <h5>⚠️ Important Notes:</h5>
+            <p>• Always buy certified seeds from authorized dealers</p>
+            <p>• Conduct germination test before sowing</p>
+            <p>• Store seeds properly to maintain viability</p>
+            <p>• Use recommended seed treatment</p>
+        </div>
+    `;
+    resultDiv.classList.add('show');
 }
 
-// Enhanced Table Row Hover Effect
-document.addEventListener('DOMContentLoaded', function() {
-    const tableRows = document.querySelectorAll('.crop-table tbody tr');
+// Disease Search Function
+function searchDisease() {
+    const crop = document.getElementById('disease-crop-select').value;
+    const searchTerm = document.getElementById('disease-search').value.toLowerCase();
+    const resultDiv = document.getElementById('disease-result');
     
-    tableRows.forEach(row => {
-        row.addEventListener('mouseenter', function() {
-            this.style.transform = 'scale(1.02)';
-            this.style.boxShadow = '0 5px 15px rgba(0, 0, 0, 0.1)';
-            this.style.zIndex = '1';
-            this.style.position = 'relative';
-        });
-
-        row.addEventListener('mouseleave', function() {
-            this.style.transform = 'scale(1)';
-            this.style.boxShadow = 'none';
-            this.style.zIndex = 'auto';
-            this.style.position = 'static';
-        });
-    });
-});
-
-// Parallax Effect for Hero Section
-window.addEventListener('scroll', function() {
-    const scrolled = window.pageYOffset;
-    const hero = document.querySelector('.hero');
-    if (hero) {
-        const rate = scrolled * -0.5;
-        hero.style.backgroundPosition = `center ${rate}px`;
+    if (!crop || !searchTerm) {
+        resultDiv.innerHTML = '<p style="color: red;">Please select a crop and enter disease name or symptoms!</p>';
+        resultDiv.classList.add('show');
+        return;
     }
-});
-
-// Form Validation and Enhancement
-document.addEventListener('DOMContentLoaded', function() {
-    // Add focus effects to input fields
-    const inputFields = document.querySelectorAll('.input-field');
     
-    inputFields.forEach(field => {
-        field.addEventListener('focus', function() {
-            this.parentElement.classList.add('focused');
-        });
-
-        field.addEventListener('blur', function() {
-            this.parentElement.classList.remove('focused');
-        });
-
-        // Add real-time validation feedback
-        field.addEventListener('input', function() {
-            if (this.type === 'number' && this.value < 0) {
-                this.style.borderColor = '#f44336';
-                this.style.boxShadow = '0 0 5px rgba(244, 67, 54, 0.3)';
-            } else {
-                this.style.borderColor = '#4caf50';
-                this.style.boxShadow = '0 0 5px rgba(76, 175, 80, 0.3)';
+    const diseaseDatabase = {
+        rice: {
+            'blast': {
+                symptoms: 'Diamond-shaped lesions on leaves, neck rot, panicle blast',
+                cause: 'Fungal disease (Magnaporthe oryzae)',
+                treatment: 'Spray Tricyclazole or Carbendazim',
+                prevention: 'Use resistant varieties, avoid excess nitrogen'
+            },
+            'brown spot': {
+                symptoms: 'Brown oval spots on leaves and grains',
+                cause: 'Fungal disease (Bipolaris oryzae)',
+                treatment: 'Spray Mancozeb or Propiconazole',
+                prevention: 'Seed treatment, balanced fertilization'
+            },
+            'bacterial blight': {
+                symptoms: 'Water-soaked lesions, yellowing of leaves',
+                cause: 'Bacterial disease (Xanthomonas oryzae)',
+                treatment: 'Spray Streptocycline or Copper oxychloride',
+                prevention: 'Use certified seeds, avoid flooding'
             }
-        });
-    });
-});
-
-// Add loading animation to buttons
-document.querySelectorAll('.calc-btn').forEach(button => {
-    button.addEventListener('click', function() {
-        const originalText = this.innerHTML;
-        this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Calculating...';
-        this.disabled = true;
-        
-        setTimeout(() => {
-            this.innerHTML = originalText;
-            this.disabled = false;
-        }, 1500);
-    });
-});
-
-// Add typing effect to hero title (optional enhancement)
-function typeWriter(element, text, speed = 100) {
-    let i = 0;
-    element.innerHTML = '';
+        },
+        wheat: {
+            'rust': {
+                symptoms: 'Orange-red pustules on leaves and stems',
+                cause: 'Fungal disease (Puccinia species)',
+                treatment: 'Spray Propiconazole or Tebuconazole',
+                prevention: 'Use resistant varieties, timely sowing'
+            },
+            'powdery mildew': {
+                symptoms: 'White powdery growth on leaves',
+                cause: 'Fungal disease (Blumeria graminis)',
+                treatment: 'Spray Sulfur or Triadimefon',
+                prevention: 'Avoid dense planting, proper ventilation'
+            },
+            'loose smut': {
+                symptoms: 'Black powdery mass replacing grains',
+                cause: 'Fungal disease (Ustilago nuda)',
+                treatment: 'Seed treatment with Vitavax',
+                prevention: 'Use certified seeds, seed treatment'
+            }
+        },
+        corn: {
+            'blight': {
+                symptoms: 'Large brown lesions on leaves',
+                cause: 'Fungal disease (Exserohilum turcicum)',
+                treatment: 'Spray Mancozeb or Carbendazim',
+                prevention: 'Crop rotation, resistant varieties'
+            },
+            'rust': {
+                symptoms: 'Orange pustules on leaves',
+                cause: 'Fungal disease (Puccinia sorghi)',
+                treatment: 'Spray Propiconazole',
+                prevention: 'Use resistant hybrids'
+            }
+        },
+        cotton: {
+            'wilt': {
+                symptoms: 'Yellowing and wilting of plants',
+                cause: 'Fungal disease (Fusarium oxysporum)',
+                treatment: 'Soil treatment with Carbendazim',
+                prevention: 'Crop rotation, resistant varieties'
+            },
+            'bollworm': {
+                symptoms: 'Holes in bolls, caterpillar damage',
+                cause: 'Insect pest (Helicoverpa armigera)',
+                treatment: 'Spray Bt or synthetic pyrethroids',
+                prevention: 'Bt cotton, pheromone traps'
+            }
+        },
+        sugarcane: {
+            'red rot': {
+                symptoms: 'Red discoloration of internodes',
+                cause: 'Fungal disease (Colletotrichum falcatum)',
+                treatment: 'Use resistant varieties',
+                prevention: 'Sett treatment, roguing'
+            }
+        },
+        vegetables: {
+            'damping off': {
+                symptoms: 'Seedling collapse at soil level',
+                cause: 'Fungal disease (Pythium, Rhizoctonia)',
+                treatment: 'Soil drenching with Metalaxyl',
+                prevention: 'Seed treatment, proper drainage'
+            },
+            'powdery mildew': {
+                symptoms: 'White powdery coating on leaves',
+                cause: 'Fungal disease (Erysiphe cichoracearum)',
+                treatment: 'Spray Sulfur or Myclobutanil',
+                prevention: 'Proper spacing, avoid overhead irrigation'
+            }
+        },
+        fruits: {
+            'anthracnose': {
+                symptoms: 'Dark sunken spots on fruits',
+                cause: 'Fungal disease (Colletotrichum species)',
+                treatment: 'Spray Carbendazim or Mancozeb',
+                prevention: 'Proper pruning, fruit bagging'
+            }
+        }
+    };
     
-    function type() {
-        if (i < text.length) {
-            element.innerHTML += text.charAt(i);
-            i++;
-            setTimeout(type, speed);
+    const cropDiseases = diseaseDatabase[crop];
+    if (!cropDiseases) {
+        resultDiv.innerHTML = '<p style="color: red;">Disease database not available for this crop!</p>';
+        resultDiv.classList.add('show');
+        return;
+    }
+    
+    // Search for disease
+    let foundDisease = null;
+    let diseaseName = '';
+    
+    for (const [disease, data] of Object.entries(cropDiseases)) {
+        if (disease.includes(searchTerm) || 
+            data.symptoms.toLowerCase().includes(searchTerm) ||
+            data.cause.toLowerCase().includes(searchTerm)) {
+            foundDisease = data;
+            diseaseName = disease;
+            break;
         }
     }
     
-    type();
+    if (!foundDisease) {
+        resultDiv.innerHTML = `
+            <h4>🔍 Search Results</h4>
+            <p style="color: orange;">No specific disease found for "${searchTerm}" in ${crop}.</p>
+            <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin: 10px 0;">
+                <h5>💡 General Recommendations:</h5>
+                <p>• Consult local agriculture extension officer</p>
+                <p>• Take photos and visit nearest KVK</p>
+                <p>• Use disease identification apps</p>
+                <p>• Contact agriculture helpline: 1800-180-1551</p>
+            </div>
+        `;
+        resultDiv.classList.add('show');
+        return;
+    }
+    
+    resultDiv.innerHTML = `
+        <h4>🦠 Disease Information: ${diseaseName.charAt(0).toUpperCase() + diseaseName.slice(1)}</h4>
+        <div style="background: #ffebee; padding: 15px; border-radius: 8px; margin: 10px 0;">
+            <h5>🔍 Symptoms:</h5>
+            <p>${foundDisease.symptoms}</p>
+        </div>
+        <div style="background: #fff3e0; padding: 15px; border-radius: 8px; margin: 10px 0;">
+            <h5>🧬 Cause:</h5>
+            <p>${foundDisease.cause}</p>
+        </div>
+        <div style="background: #e8f5e8; padding: 15px; border-radius: 8px; margin: 10px 0;">
+            <h5>💊 Treatment:</h5>
+            <p>${foundDisease.treatment}</p>
+        </div>
+        <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin: 10px 0;">
+            <h5>🛡️ Prevention:</h5>
+            <p>${foundDisease.prevention}</p>
+        </div>
+        <div style="background: #f3e5f5; padding: 15px; border-radius: 8px; margin: 10px 0;">
+            <h5>⚠️ Important:</h5>
+            <p>• Always read pesticide labels carefully</p>
+            <p>• Follow recommended dosage and safety measures</p>
+            <p>• Consult agricultural expert for severe infestations</p>
+        </div>
+    `;
+    resultDiv.classList.add('show');
 }
 
-// Initialize typing effect on load (optional)
-window.addEventListener('load', function() {
-    const heroTitle = document.querySelector('.hero-title');
-    if (heroTitle) {
-        const originalText = heroTitle.textContent;
-        // Uncomment the next line if you want typing effect
-        // typeWriter(heroTitle, originalText, 80);
-    }
-});
+// ==================== AI CHAT FUNCTIONS ====================
 
-// Add smooth reveal animation to sections
-const revealSections = document.querySelectorAll('section');
-const revealObserver = new IntersectionObserver(function(entries) {
-    entries.forEach(entry => {
-        if (entry.isIntersecting) {
-            entry.target.classList.add('revealed');
-        }
-    });
-}, {
-    threshold: 0.15
-});
-
-revealSections.forEach(section => {
-    revealObserver.observe(section);
-});
-
-// Enhanced mobile menu animation
-document.addEventListener('DOMContentLoaded', function() {
-    const navLinks = document.querySelectorAll('.nav-link');
-    
-    navLinks.forEach((link, index) => {
-        link.style.transitionDelay = `${index * 0.1}s`;
-    });
-});
-
-// Add scroll progress indicator
-window.addEventListener('scroll', function() {
-    const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
-    const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
-    const scrolled = (winScroll / height) * 100;
-    
-    // Create progress bar if it doesn't exist
-    let progressBar = document.querySelector('.scroll-progress');
-    if (!progressBar) {
-        progressBar = document.createElement('div');
-        progressBar.className = 'scroll-progress';
-        progressBar.style.cssText = `
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: ${scrolled}%;
-            height: 3px;
-            background: #ffc107;
-            z-index: 9999;
-            transition: width 0.3s ease;
-        `;
-        document.body.appendChild(progressBar);
-    } else {
-        progressBar.style.width = scrolled + '%';
-    }
-});
-
-// Console log for debugging
-console.log('Farmer Genius website loaded successfully! 🌱');
-console.log('All interactive features are ready to use.');
-
-// Error handling for calculations
-window.addEventListener('error', function(e) {
-    console.error('An error occurred:', e.error);
-    // You can add user-friendly error messages here
-});
-
-// Performance monitoring (optional)
-window.addEventListener('load', function() {
-    const loadTime = performance.now();
-    console.log(`Website loaded in ${loadTime.toFixed(2)}ms`);
-});
-
-// ============== AI ASSISTANT CHATBOT FUNCTIONALITY ==============
-
-// Chat widget state
-let isChatOpen = false;
-
-// Toggle chat widget visibility
+// Toggle Chat Widget
 function toggleChatWidget() {
     const chatWidget = document.getElementById('chat-widget');
     const chatButton = document.getElementById('chat-button');
     
-    isChatOpen = !isChatOpen;
-    
-    if (isChatOpen) {
+    if (chatOpen) {
+        chatWidget.style.display = 'none';
+        chatWidget.classList.remove('chat-open');
+        chatButton.style.display = 'flex';
+        chatOpen = false;
+    } else {
         chatWidget.style.display = 'flex';
-        chatButton.style.display = 'none';
         setTimeout(() => {
             chatWidget.classList.add('chat-open');
         }, 10);
+        chatButton.style.display = 'none';
+        chatOpen = true;
         
-        // Focus on input when opening
-        setTimeout(() => {
-            document.getElementById('chat-input').focus();
-        }, 300);
-    } else {
-        chatWidget.classList.remove('chat-open');
-        setTimeout(() => {
-            chatWidget.style.display = 'none';
-            chatButton.style.display = 'flex';
-        }, 300);
+        // Focus on input
+        const chatInput = document.getElementById('chat-input');
+        if (chatInput) {
+            setTimeout(() => chatInput.focus(), 300);
+        }
     }
 }
-
-// Send message function
-function sendMessage() {
-    const input = document.getElementById('chat-input');
-    const message = input.value.trim();
-    
-    if (message === '') return;
-    
-    // Add user message
-    addMessage(message, 'user');
-    input.value = '';
-    
-    // Show typing indicator
-    showTypingIndicator();
-    
-    // Get AI response after a delay (simulate thinking)
-    setTimeout(() => {
-        hideTypingIndicator();
-        const response = getAIResponse(message);
-        addMessage(response, 'bot');
-    }, 1500);
-}
-
-// Handle Enter key in chat input
-document.addEventListener('DOMContentLoaded', function() {
-    const chatInput = document.getElementById('chat-input');
-    if (chatInput) {
-        chatInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                sendMessage();
-            }
-        });
-    }
-});
 
 // Add message to chat
-function addMessage(message, sender) {
-    const messagesContainer = document.getElementById('chat-messages');
+function addMessage(message, isUser = false) {
+    const chatMessages = document.getElementById('chat-messages');
     const messageDiv = document.createElement('div');
-    messageDiv.className = sender === 'user' ? 'user-message' : 'bot-message';
+    messageDiv.className = isUser ? 'user-message' : 'bot-message';
     
-    if (sender === 'user') {
-        messageDiv.innerHTML = `
-            <div class="message-content">
-                <p>${message}</p>
-            </div>
-            <div class="message-avatar user-avatar">
-                <i class="fas fa-user"></i>
-            </div>
-        `;
-    } else {
-        messageDiv.innerHTML = `
-            <div class="message-avatar">
-                <i class="fas fa-robot"></i>
-            </div>
-            <div class="message-content">
-                <p>${message}</p>
-            </div>
-        `;
-    }
+    const avatarDiv = document.createElement('div');
+    avatarDiv.className = isUser ? 'message-avatar user-avatar' : 'message-avatar';
+    avatarDiv.innerHTML = isUser ? '<i class="fas fa-user"></i>' : '<i class="fas fa-robot"></i>';
     
-    messagesContainer.appendChild(messageDiv);
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'message-content';
+    contentDiv.innerHTML = `<p>${message}</p>`;
     
-    // Scroll to bottom
-    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    messageDiv.appendChild(avatarDiv);
+    messageDiv.appendChild(contentDiv);
+    
+    chatMessages.appendChild(messageDiv);
     
     // Animate message appearance
     setTimeout(() => {
         messageDiv.style.opacity = '1';
         messageDiv.style.transform = 'translateY(0)';
-    }, 10);
+    }, 100);
+    
+    // Scroll to bottom
+    chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
 // Show typing indicator
 function showTypingIndicator() {
-    const messagesContainer = document.getElementById('chat-messages');
+    const chatMessages = document.getElementById('chat-messages');
     const typingDiv = document.createElement('div');
     typingDiv.className = 'bot-message typing-indicator';
     typingDiv.id = 'typing-indicator';
@@ -983,471 +704,341 @@ function showTypingIndicator() {
         </div>
     `;
     
-    messagesContainer.appendChild(typingDiv);
-    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    chatMessages.appendChild(typingDiv);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+    
+    setTimeout(() => {
+        typingDiv.style.opacity = '1';
+        typingDiv.style.transform = 'translateY(0)';
+    }, 100);
 }
 
-// Hide typing indicator
-function hideTypingIndicator() {
+// Remove typing indicator
+function removeTypingIndicator() {
     const typingIndicator = document.getElementById('typing-indicator');
     if (typingIndicator) {
         typingIndicator.remove();
     }
 }
 
+// Send message to OpenAI API
+async function sendToAI(message) {
+    try {
+        const response = await fetch(OPENAI_API_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${OPENAI_API_KEY}`,
+                'HTTP-Referer': window.location.origin,
+                'X-Title': 'Farmer Genius AI Assistant'
+            },
+            body: JSON.stringify({
+                model: 'gpt-3.5-turbo',
+                messages: [
+                    {
+                        role: 'system',
+                        content: `You are an expert agricultural AI assistant for Indian farmers. Your name is "Farm AI Assistant" and you work for "Farmer Genius" platform. 
+
+IMPORTANT GUIDELINES:
+- Always provide practical, actionable advice for Indian farming conditions
+- Include specific crop varieties, fertilizer names, and local solutions when possible
+- Mention government schemes (PM-KISAN, PMFBY, etc.) when relevant
+- Use simple language that farmers can understand
+- Include cost estimates in Indian Rupees when discussing inputs
+- Suggest local resources like KVKs, agriculture extension officers
+- Always prioritize farmer safety and sustainable practices
+- Keep responses concise but informative (max 200 words)
+- Include relevant emojis to make responses engaging
+
+TOPICS YOU EXCEL IN:
+- Crop selection and planning
+- Fertilizer and pesticide recommendations
+- Irrigation and water management
+- Pest and disease identification
+- Soil health and testing
+- Government schemes and subsidies
+- Market prices and selling strategies
+- Weather-based farming advice
+- Organic farming practices
+- Farm mechanization
+
+Always end responses with a helpful tip or suggestion for the farmer.`
+                    },
+                    {
+                        role: 'user',
+                        content: message
+                    }
+                ],
+                max_tokens: 300,
+                temperature: 0.7
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`API request failed: ${response.status}`);
+        }
+
+        const data = await response.json();
+        return data.choices[0].message.content;
+    } catch (error) {
+        console.error('AI API Error:', error);
+        return `I apologize, but I'm having trouble connecting to my knowledge base right now. 🤖
+
+Here are some quick farming tips while I get back online:
+
+🌱 **General Farming Advice:**
+• Test your soil pH regularly (ideal: 6.0-7.5)
+• Apply organic manure before chemical fertilizers
+• Water crops early morning or evening
+• Monitor weather forecasts for planning
+
+📞 **Get Help:**
+• Contact your local KVK (Krishi Vigyan Kendra)
+• Call agriculture helpline: 1800-180-1551
+• Visit nearest agriculture extension office
+
+💡 **Tip:** Keep a farming diary to track what works best for your land!`;
+    }
+}
+
+// Send message function
+async function sendMessage() {
+    const chatInput = document.getElementById('chat-input');
+    const message = chatInput.value.trim();
+    
+    if (!message) return;
+    
+    // Add user message
+    addMessage(message, true);
+    chatInput.value = '';
+    
+    // Show typing indicator
+    showTypingIndicator();
+    
+    try {
+        // Get AI response
+        const aiResponse = await sendToAI(message);
+        
+        // Remove typing indicator and add AI response
+        removeTypingIndicator();
+        addMessage(aiResponse);
+    } catch (error) {
+        removeTypingIndicator();
+        addMessage("I'm sorry, I'm having trouble processing your request right now. Please try again in a moment. 🤖");
+    }
+}
+
 // Quick question function
-function askQuickQuestion(question) {
-    document.getElementById('chat-input').value = question;
-    sendMessage();
+async function askQuickQuestion(question) {
+    const chatInput = document.getElementById('chat-input');
+    chatInput.value = question;
+    await sendMessage();
 }
 
-// AI Response System with pre-written responses
-function getAIResponse(userMessage) {
-    const message = userMessage.toLowerCase();
-    
-    // Crop-related questions
-    if (message.includes('best crop') || message.includes('which crop')) {
-        return "🌾 The best crop depends on your soil type and climate! For clay soil: Rice, wheat work well. For sandy soil: Try millet, groundnut. For loamy soil: Most crops thrive including tomatoes, corn. What's your soil type?";
-    }
-    
-    if (message.includes('wheat') && (message.includes('water') || message.includes('irrigation'))) {
-        return "💧 Wheat needs about 8,000 liters of water per acre daily. Total seasonal requirement is around 800,000 liters per acre. Best irrigation: 3-4 times during critical growth stages - tillering, jointing, flowering, and grain filling.";
-    }
-    
-    if (message.includes('rice') && (message.includes('plant') || message.includes('sow'))) {
-        return "🌾 Rice planting times: Kharif (June-July) for monsoon rice, Rabi (Nov-Dec) for winter rice. Ensure soil temperature is 20-35°C. Pre-monsoon planting gives better yields in most regions.";
-    }
-    
-    // Fertilizer questions
-    if (message.includes('fertilizer') || message.includes('nutrient')) {
-        return "🧪 For balanced nutrition: NPK ratio varies by crop. Rice needs 120:60:40 kg/acre, Wheat needs 150:60:40 kg/acre. Apply in 2-3 splits. Use soil test results for precise recommendations!";
-    }
-    
-    // Soil-related questions
-    if (message.includes('soil') && (message.includes('test') || message.includes('health'))) {
-        return "🔬 Soil testing is crucial! Test pH (ideal 6.5-7.5), NPK levels, organic matter. Get tests done annually before major season. Contact your local agricultural extension office for soil health cards.";
-    }
-    
-    if (message.includes('ph') || message.includes('acidic') || message.includes('alkaline')) {
-        return "⚖️ Soil pH affects nutrient availability! Acidic soil (pH <6.5): Add lime. Alkaline soil (pH >7.5): Add organic matter, sulfur. Most crops prefer 6.5-7.5 pH range.";
-    }
-    
-    // Irrigation questions
-    if (message.includes('irrigation') || message.includes('watering')) {
-        return "💦 Smart irrigation tips: Use drip irrigation to save 30-50% water. Water early morning or evening. Check soil moisture at 6-inch depth. Different crops need different water schedules!";
-    }
-    
-    // Pest and disease
-    if (message.includes('pest') || message.includes('insect') || message.includes('disease')) {
-        return "🐛 Integrated Pest Management (IPM) is best! Use neem oil for organic control. Practice crop rotation. Plant marigold, basil as companion plants. Monitor regularly and use targeted treatments only when needed.";
-    }
-    
-    // Organic farming
-    if (message.includes('organic') || message.includes('natural')) {
-        return "🌱 Organic farming tips: Use compost, vermicompost for nutrients. Practice green manuring with legumes. Use bio-pesticides like neem, BT. Maintain beneficial insects. Crop rotation is key!";
-    }
-    
-    // Weather and climate
-    if (message.includes('weather') || message.includes('climate') || message.includes('rain')) {
-        return "🌤️ Weather planning is important! Check 7-day forecasts before planting/spraying. Avoid irrigation before expected rains. Use weather apps for alerts. Climate-resilient varieties help adapt to changing patterns.";
-    }
-    
-    // Seeds and varieties
-    if (message.includes('seed') || message.includes('variety') || message.includes('hybrid')) {
-        return "🌰 Seed selection tips: Use certified seeds from authorized dealers. Choose varieties suited to your region and season. Hybrid varieties often give higher yields. Traditional varieties are more climate-resilient.";
-    }
-    
-    // Government schemes
-    if (message.includes('scheme') || message.includes('subsidy') || message.includes('government')) {
-        return "🏛️ Key schemes for farmers: PM-KISAN (₹6000/year), Crop Insurance (PMFBY), Farm mechanization subsidies, Soil health cards. Visit your local agriculture office or check government portals for applications.";
-    }
-    
-    // Market and selling
-    if (message.includes('market') || message.includes('sell') || message.includes('price')) {
-        return "💰 Marketing tips: Check mandi prices regularly. Use FPOs (Farmer Producer Organizations) for better rates. Consider direct selling, online platforms. Store properly to avoid post-harvest losses. Plan harvest timing with market demand.";
-    }
-    
-    // Technology
-    if (message.includes('technology') || message.includes('app') || message.includes('digital')) {
-        return "📱 Farm tech helps! Use weather apps, soil testing apps, mandi price apps. Drones for crop monitoring, GPS for precision farming. Digital payment for transparent transactions. Stay updated with agricultural universities' recommendations.";
-    }
-    
-    // Greetings and general
-    if (message.includes('hello') || message.includes('hi') || message.includes('hey')) {
-        return "👋 Hello farmer! I'm here to help with all your agricultural questions. Ask me about crops, fertilizers, irrigation, soil health, pest control, government schemes, or any farming practices!";
-    }
-    
-    if (message.includes('thank') || message.includes('thanks')) {
-        return "🙏 You're welcome! Happy to help fellow farmers succeed. Feel free to ask more questions anytime. Good luck with your farming! 🌾";
-    }
-    
-    // Default response for unrecognized questions
-    return "🤔 That's an interesting question! While I try to help with common farming topics, I recommend consulting your local agricultural extension officer for specific technical advice. You can also ask me about crops, fertilizers, irrigation, soil testing, or government schemes. What would you like to know?";
-}
-
-// Initialize chat widget state on page load
+// Handle Enter key in chat input
 document.addEventListener('DOMContentLoaded', function() {
-    const chatWidget = document.getElementById('chat-widget');
-    const chatButton = document.getElementById('chat-button');
-    
-    // Initially hide chat widget
-    chatWidget.style.display = 'none';
-    chatButton.style.display = 'flex';
-    
-    // Add animation to chat button
-    setTimeout(() => {
-        chatButton.classList.add('pulse-animation');
-    }, 3000);
+    const chatInput = document.getElementById('chat-input');
+    if (chatInput) {
+        chatInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+    }
 });
 
-// Add pulse animation class periodically to draw attention
-setInterval(() => {
-    const chatButton = document.getElementById('chat-button');
-    if (chatButton && !isChatOpen) {
-        chatButton.classList.add('pulse-animation');
-        setTimeout(() => {
-            chatButton.classList.remove('pulse-animation');
-        }, 2000);
-    }
-}, 30000); // Every 30 seconds
+// ==================== SETTINGS FUNCTIONS ====================
 
-// Navigation Toggle Functions
-let navTimeout;
-
-function toggleNavigation() {
-    const navbar = document.getElementById('navbar');
-    const navToggle = document.getElementById('navToggle');
-    const icon = navToggle.querySelector('i');
+// Apply language changes
+function applyLanguage(lang) {
+    currentLanguage = lang;
+    const elements = document.querySelectorAll('[data-en]');
     
-    if (navbar.classList.contains('active')) {
-        hideNavigation();
-    } else {
-        showNavigation();
-    }
-}
-
-function showNavigation() {
-    const navbar = document.getElementById('navbar');
-    const navToggle = document.getElementById('navToggle');
-    const icon = navToggle.querySelector('i');
-    
-    navbar.classList.add('active');
-    navToggle.classList.add('active');
-    icon.className = 'fas fa-times';
-    
-    // Start auto-hide timeout
-    setTimeout(() => {
-        if (navbar.classList.contains('active')) {
-            startNavTimeout();
-        }
-    }, 100);
-}
-
-function hideNavigation() {
-    const navbar = document.getElementById('navbar');
-    const navToggle = document.getElementById('navToggle');
-    const icon = navToggle.querySelector('i');
-    
-    navbar.classList.remove('active');
-    navToggle.classList.remove('active');
-    icon.className = 'fas fa-bars';
-    
-    clearTimeout(navTimeout);
-}
-
-function startNavTimeout() {
-    clearTimeout(navTimeout);
-    navTimeout = setTimeout(() => {
-        const navbar = document.getElementById('navbar');
-        if (navbar.classList.contains('active')) {
-            hideNavigation();
-        }
-    }, 3000);
-}
-
-// ==================== SETTINGS FUNCTIONALITY ====================
-
-// Initialize settings on page load
-document.addEventListener('DOMContentLoaded', function() {
-    loadSettings();
-    setupSettingsEventListeners();
-});
-
-// Settings data structure
-const defaultSettings = {
-    theme: 'light',
-    language: 'en',
-    notifications: {
-        weather: true,
-        schemes: true,
-        tips: true
-    }
-};
-
-// Load settings from localStorage or use defaults
-function loadSettings() {
-    try {
-        const savedSettings = localStorage.getItem('farmerGeniusSettings');
-        const settings = savedSettings ? JSON.parse(savedSettings) : defaultSettings;
-        
-        // Apply theme
-        applyTheme(settings.theme);
-        
-        // Apply language
-        applyLanguage(settings.language);
-        
-        // Update settings page controls if on settings page
-        updateSettingsUI(settings);
-        
-        return settings;
-    } catch (error) {
-        console.log('Error loading settings:', error);
-        return defaultSettings;
-    }
-}
-
-// Save settings to localStorage
-function saveSettingsToStorage(settings) {
-    try {
-        localStorage.setItem('farmerGeniusSettings', JSON.stringify(settings));
-        return true;
-    } catch (error) {
-        console.log('Error saving settings:', error);
-        return false;
-    }
-}
-
-// Apply theme to the document
-function applyTheme(theme) {
-    const body = document.body;
-    if (theme === 'dark') {
-        body.setAttribute('data-theme', 'dark');
-    } else {
-        body.removeAttribute('data-theme');
-    }
-}
-
-// Apply language to the document
-function applyLanguage(language) {
-    document.documentElement.lang = language;
-    
-    // Update all elements with data-en and data-hi attributes
-    const elements = document.querySelectorAll('[data-en][data-hi]');
     elements.forEach(element => {
-        if (language === 'hi' && element.getAttribute('data-hi')) {
-            element.textContent = element.getAttribute('data-hi');
-        } else if (language === 'en' && element.getAttribute('data-en')) {
-            element.textContent = element.getAttribute('data-en');
+        const text = element.getAttribute(`data-${lang}`);
+        if (text) {
+            element.textContent = text;
         }
     });
     
-    // Update placeholders for input elements
-    const inputElements = document.querySelectorAll('[data-en-placeholder][data-hi-placeholder]');
-    inputElements.forEach(element => {
-        if (language === 'hi' && element.getAttribute('data-hi-placeholder')) {
-            element.placeholder = element.getAttribute('data-hi-placeholder');
-        } else if (language === 'en' && element.getAttribute('data-en-placeholder')) {
-            element.placeholder = element.getAttribute('data-en-placeholder');
+    // Update placeholders
+    const placeholderElements = document.querySelectorAll('[data-en-placeholder]');
+    placeholderElements.forEach(element => {
+        const placeholder = element.getAttribute(`data-${lang}-placeholder`);
+        if (placeholder) {
+            element.placeholder = placeholder;
         }
     });
+    
+    localStorage.setItem('farmer-genius-language', lang);
 }
 
-// Update settings UI controls
-function updateSettingsUI(settings) {
-    // Update theme radio buttons
-    const themeInputs = document.querySelectorAll('input[name="theme"]');
-    themeInputs.forEach(input => {
-        input.checked = input.value === settings.theme;
-    });
-    
-    // Update language radio buttons
-    const languageInputs = document.querySelectorAll('input[name="language"]');
-    languageInputs.forEach(input => {
-        input.checked = input.value === settings.language;
-    });
-    
-    // Update notification checkboxes
-    const weatherCheckbox = document.getElementById('weather-alerts');
-    const schemeCheckbox = document.getElementById('scheme-updates');
-    const tipsCheckbox = document.getElementById('farming-tips');
-    
-    if (weatherCheckbox) weatherCheckbox.checked = settings.notifications.weather;
-    if (schemeCheckbox) schemeCheckbox.checked = settings.notifications.schemes;
-    if (tipsCheckbox) tipsCheckbox.checked = settings.notifications.tips;
+// Apply theme changes
+function applyTheme(theme) {
+    currentTheme = theme;
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('farmer-genius-theme', theme);
 }
 
-// Setup event listeners for settings controls
-function setupSettingsEventListeners() {
-    // Theme change listeners
-    const themeInputs = document.querySelectorAll('input[name="theme"]');
-    themeInputs.forEach(input => {
-        input.addEventListener('change', function() {
-            if (this.checked) {
-                applyTheme(this.value);
-                showSettingsMessage(`Theme changed to ${this.value} mode`, 'success');
-            }
-        });
-    });
-    
-    // Language change listeners
-    const languageInputs = document.querySelectorAll('input[name="language"]');
-    languageInputs.forEach(input => {
-        input.addEventListener('change', function() {
-            if (this.checked) {
-                applyLanguage(this.value);
-                const message = this.value === 'hi' ? 'भाषा हिंदी में बदली गई' : 'Language changed to English';
-                showSettingsMessage(message, 'success');
-            }
-        });
-    });
-}
-
-// Save all settings
+// Save settings function
 function saveSettings() {
-    try {
-        const settings = {
-            theme: document.querySelector('input[name="theme"]:checked')?.value || 'light',
-            language: document.querySelector('input[name="language"]:checked')?.value || 'en',
-            notifications: {
-                weather: document.getElementById('weather-alerts')?.checked || false,
-                schemes: document.getElementById('scheme-updates')?.checked || false,
-                tips: document.getElementById('farming-tips')?.checked || false
-            }
-        };
-        
-        if (saveSettingsToStorage(settings)) {
-            const message = settings.language === 'hi' ? 'सेटिंग्स सफलतापूर्वक सेव हो गईं!' : 'Settings saved successfully!';
-            showSettingsMessage(message, 'success');
-        } else {
-            const message = settings.language === 'hi' ? 'सेटिंग्स सेव करने में त्रुटि!' : 'Error saving settings!';
-            showSettingsMessage(message, 'error');
-        }
-    } catch (error) {
-        console.log('Error in saveSettings:', error);
-        showSettingsMessage('Error saving settings!', 'error');
-    }
+    const selectedTheme = document.querySelector('input[name="theme"]:checked')?.value || 'light';
+    const selectedLanguage = document.querySelector('input[name="language"]:checked')?.value || 'en';
+    
+    // Apply theme
+    applyTheme(selectedTheme);
+    
+    // Apply language
+    applyLanguage(selectedLanguage);
+    
+    // Save notification preferences
+    const weatherAlerts = document.getElementById('weather-alerts')?.checked || false;
+    const schemeUpdates = document.getElementById('scheme-updates')?.checked || false;
+    const farmingTips = document.getElementById('farming-tips')?.checked || false;
+    
+    localStorage.setItem('farmer-genius-notifications', JSON.stringify({
+        weather: weatherAlerts,
+        schemes: schemeUpdates,
+        tips: farmingTips
+    }));
+    
+    // Show success message
+    alert('Settings saved successfully! 🎉');
 }
 
-// Reset settings to default
+// Reset settings function
 function resetSettings() {
-    try {
-        const confirmMessage = document.documentElement.lang === 'hi' 
-            ? 'क्या आप वाकई सेटिंग्स को डिफ़ॉल्ट पर रीसेट करना चाहते हैं?' 
-            : 'Are you sure you want to reset settings to default?';
+    if (confirm('Are you sure you want to reset all settings to default?')) {
+        // Reset theme
+        document.querySelector('input[value="light"]').checked = true;
+        applyTheme('light');
+        
+        // Reset language
+        document.querySelector('input[value="en"]').checked = true;
+        applyLanguage('en');
+        
+        // Reset notifications
+        document.getElementById('weather-alerts').checked = true;
+        document.getElementById('scheme-updates').checked = true;
+        document.getElementById('farming-tips').checked = true;
+        
+        // Clear localStorage
+        localStorage.removeItem('farmer-genius-theme');
+        localStorage.removeItem('farmer-genius-language');
+        localStorage.removeItem('farmer-genius-notifications');
+        
+        alert('Settings reset to default! 🔄');
+    }
+}
+
+// Load saved settings on page load
+function loadSettings() {
+    // Load theme
+    const savedTheme = localStorage.getItem('farmer-genius-theme') || 'light';
+    const themeRadio = document.querySelector(`input[value="${savedTheme}"]`);
+    if (themeRadio) {
+        themeRadio.checked = true;
+        applyTheme(savedTheme);
+    }
+    
+    // Load language
+    const savedLanguage = localStorage.getItem('farmer-genius-language') || 'en';
+    const languageRadio = document.querySelector(`input[value="${savedLanguage}"]`);
+    if (languageRadio) {
+        languageRadio.checked = true;
+        applyLanguage(savedLanguage);
+    }
+    
+    // Load notifications
+    const savedNotifications = localStorage.getItem('farmer-genius-notifications');
+    if (savedNotifications) {
+        const notifications = JSON.parse(savedNotifications);
+        const weatherCheckbox = document.getElementById('weather-alerts');
+        const schemesCheckbox = document.getElementById('scheme-updates');
+        const tipsCheckbox = document.getElementById('farming-tips');
+        
+        if (weatherCheckbox) weatherCheckbox.checked = notifications.weather;
+        if (schemesCheckbox) schemesCheckbox.checked = notifications.schemes;
+        if (tipsCheckbox) tipsCheckbox.checked = notifications.tips;
+    }
+}
+
+// ==================== INITIALIZATION ====================
+
+// Initialize the application
+document.addEventListener('DOMContentLoaded', function() {
+    // Load saved settings
+    loadSettings();
+    
+    // Add smooth scrolling to navigation links
+    const navLinks = document.querySelectorAll('.nav-link[href^="#"]');
+    navLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const targetId = this.getAttribute('href').substring(1);
+            const targetElement = document.getElementById(targetId);
             
-        if (confirm(confirmMessage)) {
-            // Clear localStorage
-            localStorage.removeItem('farmerGeniusSettings');
-            
-            // Apply default settings
-            applyTheme(defaultSettings.theme);
-            applyLanguage(defaultSettings.language);
-            updateSettingsUI(defaultSettings);
-            
-            const message = defaultSettings.language === 'hi' 
-                ? 'सेटिंग्स डिफ़ॉल्ट पर रीसेट हो गईं!' 
-                : 'Settings reset to default!';
-            showSettingsMessage(message, 'success');
+            if (targetElement) {
+                targetElement.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+                
+                // Close navigation on mobile
+                const navbar = document.getElementById('navbar');
+                const navToggle = document.getElementById('navToggle');
+                navbar.classList.remove('active');
+                navToggle.classList.remove('active');
+            }
+        });
+    });
+    
+    // Add loading animation to tool cards
+    const toolCards = document.querySelectorAll('.tool-card, .scheme-card, .feature-card');
+    const observerOptions = {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+    };
+    
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('loading');
+            }
+        });
+    }, observerOptions);
+    
+    toolCards.forEach(card => {
+        observer.observe(card);
+    });
+    
+    // Add pulse animation to chat button periodically
+    const chatButton = document.getElementById('chat-button');
+    if (chatButton) {
+        setInterval(() => {
+            if (!chatOpen) {
+                chatButton.classList.add('pulse-animation');
+                setTimeout(() => {
+                    chatButton.classList.remove('pulse-animation');
+                }, 1500);
+            }
+        }, 10000); // Pulse every 10 seconds
+    }
+    
+    console.log('🌾 Farmer Genius initialized successfully!');
+    console.log('🤖 AI Assistant ready with OpenRouter API');
+});
+
+// Handle page visibility change to manage chat state
+document.addEventListener('visibilitychange', function() {
+    if (document.hidden && chatOpen) {
+        // Page is hidden, could pause chat or save state
+        console.log('Page hidden, chat state preserved');
+    } else if (!document.hidden && chatOpen) {
+        // Page is visible again, restore chat focus
+        const chatInput = document.getElementById('chat-input');
+        if (chatInput) {
+            setTimeout(() => chatInput.focus(), 100);
         }
-    } catch (error) {
-        console.log('Error in resetSettings:', error);
-        showSettingsMessage('Error resetting settings!', 'error');
     }
-}
-
-// Show settings message notification
-function showSettingsMessage(message, type) {
-    // Remove existing message
-    const existingMessage = document.querySelector('.settings-message');
-    if (existingMessage) {
-        existingMessage.remove();
-    }
-    
-    // Create new message
-    const messageDiv = document.createElement('div');
-    messageDiv.className = `settings-message ${type}`;
-    messageDiv.style.cssText = `
-        position: fixed;
-        top: 100px;
-        right: 20px;
-        padding: 15px 20px;
-        background: ${type === 'success' ? '#4caf50' : '#f44336'};
-        color: white;
-        border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-        z-index: 10000;
-        font-weight: 500;
-        min-width: 250px;
-        text-align: center;
-        animation: slideInRight 0.3s ease;
-    `;
-    messageDiv.textContent = message;
-    
-    // Add to body
-    document.body.appendChild(messageDiv);
-    
-    // Auto remove after 3 seconds
-    setTimeout(() => {
-        if (messageDiv.parentNode) {
-            messageDiv.style.animation = 'slideOutRight 0.3s ease forwards';
-            setTimeout(() => {
-                if (messageDiv.parentNode) {
-                    messageDiv.remove();
-                }
-            }, 300);
-        }
-    }, 3000);
-}
-
-// Quick theme toggle function (can be called from anywhere)
-function toggleTheme() {
-    const currentSettings = loadSettings();
-    const newTheme = currentSettings.theme === 'light' ? 'dark' : 'light';
-    applyTheme(newTheme);
-    
-    // Update settings and save
-    currentSettings.theme = newTheme;
-    saveSettingsToStorage(currentSettings);
-    updateSettingsUI(currentSettings);
-    
-    const message = newTheme === 'dark' 
-        ? (currentSettings.language === 'hi' ? 'डार्क मोड सक्रिय' : 'Dark mode enabled')
-        : (currentSettings.language === 'hi' ? 'लाइट मोड सक्रिय' : 'Light mode enabled');
-    showSettingsMessage(message, 'success');
-}
-
-// Quick language toggle function
-function toggleLanguage() {
-    const currentSettings = loadSettings();
-    const newLanguage = currentSettings.language === 'en' ? 'hi' : 'en';
-    applyLanguage(newLanguage);
-    
-    // Update settings and save
-    currentSettings.language = newLanguage;
-    saveSettingsToStorage(currentSettings);
-    updateSettingsUI(currentSettings);
-    
-    const message = newLanguage === 'hi' ? 'भाषा हिंदी में बदली गई' : 'Language changed to English';
-    showSettingsMessage(message, 'success');
-}
-
-// Add CSS animations for messages
-const style = document.createElement('style');
-style.textContent = `
-    @keyframes slideInRight {
-        from { transform: translateX(100%); opacity: 0; }
-        to { transform: translateX(0); opacity: 1; }
-    }
-    @keyframes slideOutRight {
-        from { transform: translateX(0); opacity: 1; }
-        to { transform: translateX(100%); opacity: 0; }
-    }
-`;
-document.head.appendChild(style);
-
-// Console logging for development
-console.log('🌾 Farmer Genius Settings initialized! Available functions:');
-console.log('- toggleTheme() - Quick theme toggle');
-console.log('- toggleLanguage() - Quick language toggle'); 
-console.log('- saveSettings() - Save all settings');
-console.log('- resetSettings() - Reset to defaults');
+});
